@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOLDIER'S CAREER: FROM PRIVATE TO COMMAND</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090e17;
+            color: #e2e8f0;
+            user-select: none;
+        }
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+        .bg-tactical-grid {
+            background-image: 
+                linear-gradient(to right, rgba(132, 169, 140, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(132, 169, 140, 0.04) 1px, transparent 1px);
+            background-size: 26px 26px;
+        }
+        @keyframes pulse-danger {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+            50% { box-shadow: 0 0 18px 4px rgba(239, 68, 68, 0.25); }
+        }
+        .deployment-glow {
+            animation: pulse-danger 2.2s infinite;
+        }
+        .cmd-btn {
+            transition: all 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cmd-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .cmd-btn:active:not(:disabled) {
+            transform: translateY(0px);
+        }
+        .dd214-card {
+            background: linear-gradient(145deg, #111827 0%, #0b111e 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-tactical-grid">
+
+    <!-- ==================== GLOBAL TOP NAVBAR ==================== -->
+    <header class="bg-slate-950/95 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center sticky top-0 z-40 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/50 flex items-center justify-center text-amber-400 font-black shadow-inner">
+                ★
+            </div>
+            <div>
+                <h1 class="text-sm sm:text-base font-black tracking-wider text-slate-100 flex items-center gap-2">
+                    SOLDIER'S CAREER
+                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.1 // RELAXED HARD & SQUAD</span>
+                </h1>
+                <p class="text-[10px] text-slate-400 font-mono-tech tracking-widest hidden sm:block">FROM PRIVATE TO COMMAND // MONTHLY LIFE & CAREER SIM</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-2.5">
+            <button onclick="openHelpModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-amber-300 flex items-center gap-1.5 transition">
+                <span>📖</span> <span class="hidden sm:inline">ガイド・階級表</span><span class="sm:hidden">ガイド</span>
+            </button>
+            <button id="soundToggleBtn" onclick="toggleSound()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-mono-tech flex items-center gap-1.5 transition">
+                <span id="soundIcon">🔊</span> <span id="soundLabel" class="hidden sm:inline">SFX: ON</span>
+            </button>
+            <button id="resetBtn" onclick="confirmRestart()" class="hidden px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-950/70 border border-slate-600 hover:border-red-500/60 text-xs text-slate-300 hover:text-red-300 transition">
+                タイトルへ
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== SCREEN 1: TITLE & SETUP ==================== -->
+    <main id="setupScreen" class="flex-1 flex items-center justify-center p-4">
+        <div class="max-w-3xl w-full bg-slate-900/95 border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-br from-slate-950 via-[#1a261d] to-slate-900 p-6 sm:p-8 border-b border-slate-800 text-center relative">
+                <div class="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 text-xs font-mono-tech mb-3">
+                    1 TURN = 1 MONTH // AGE 18 TO MANDATORY RETIREMENT
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+                    SOLDIER'S CAREER
+                </h2>
+                <p class="text-xs sm:text-sm text-amber-400/90 font-mono-tech tracking-widest mb-3">
+                    FROM PRIVATE TO COMMAND
+                </p>
+                <p class="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
+                    18歳の新兵（二等兵 E-1）として入隊し、駐屯地勤務と戦地派遣のサイクルを生き抜け。<br class="hidden sm:inline">
+                    昇進して<strong>直属の部下を率いる責任</strong>と、<strong>給料アップで生活レベルを高める特権</strong>を味わいながら、軍人人生の頂点を目指せ！
+                </p>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">兵士氏名 (SOLDIER NAME)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inputName" value="ジョン・ミラー" maxlength="18"
+                                class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 transition">
+                            <button type="button" onclick="generateRandomName()" title="ランダム生成"
+                                class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-400 font-bold text-xs transition shrink-0">
+                                🎲 ランダム
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">初期配属兵科 (INITIAL MOS)</label>
+                        <select id="inputBranch" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 transition">
+                            <option value="INFANTRY">歩兵科 (Infantry) - 体力・射撃重視</option>
+                            <option value="SUPPORT">衛生・後方支援 (Medical/Logistics) - 知識・耐久重視</option>
+                            <option value="INTEL">情報・通信科 (Intel/Signal) - 知識・将校転向有利</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">難易度＆キャリアモード選択 (DIFFICULTY)</label>
+                        <button type="button" onclick="openHelpModal()" class="text-xs text-amber-400 hover:underline font-semibold">
+                            階級・部下・生活レベル詳細 →
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- EASY -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="EASY" class="peer sr-only">
+                            <div class="p-4 rounded-xl bg-slate-950/90 border-2 border-slate-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/25 transition h-full flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="font-black text-emerald-400 text-sm">EASY</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">体験モード</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                                        <strong class="text-emerald-300">純粋な下士官キャリア（E-1〜E-9）専用。</strong>将校転向（OCS）は発生せず、基礎システムと昇進・部下育成を体験できます。
+                                    </p>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/90 text-[11px] text-slate-400 font-mono-tech space-y-0.5">
+                                    <div>• 戦死: なし / 強制退役: なし</div>
+                                    <div>• 負傷・PTSD発生率: 低</div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- NORMAL -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="NORMAL" class="peer sr-only" checked>
+                            <div class="p-4 rounded-xl bg-slate-950/90 border-2 border-slate-800 peer-checked:border-amber-500 peer-checked:bg-amber-950/25 transition h-full flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="font-black text-amber-400 text-sm">NORMAL</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">標準・分岐解禁</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                                        <strong class="text-amber-300">キャリア分岐が解禁！</strong>下士官の頂点（E-9）を極めるか、途中でOCSへ志願して将校（O-1〜O-7）へ成り上がるかを選べます。
+                                    </p>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/90 text-[11px] text-slate-400 font-mono-tech space-y-0.5">
+                                    <div>• 戦死: なし (重傷時は配置転換)</div>
+                                    <div>• 強制退役: なし (20〜30年勤続)</div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <!-- HARD -->
+                        <label class="cursor-pointer">
+                            <input type="radio" name="difficulty" value="HARD" class="peer sr-only">
+                            <div class="p-4 rounded-xl bg-slate-950/90 border-2 border-slate-800 peer-checked:border-red-500 peer-checked:bg-red-950/25 transition h-full flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="font-black text-red-400 text-sm">HARD</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-bold">実戦リアル</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                                        NORMALの全キャリア分岐に加え、戦地での<strong class="text-red-300">戦死リスク</strong>と、緩やかな昇進期限<strong class="text-red-300">「Up or Out（特例延長救済あり）」</strong>を適用。
+                                    </p>
+                                </div>
+                                <div class="pt-2 border-t border-slate-800/90 text-[11px] text-red-300/90 font-mono-tech space-y-0.5">
+                                    <div>• 戦死: あり / Up or Out: 緩和済</div>
+                                    <div>• 期限残り12ヶ月警告＆特例延長あり</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="startGame()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-base tracking-wider shadow-lg shadow-amber-500/20 transition transform hover:-translate-y-0.5">
+                    入隊宣誓を行いキャリアを開始する (ENLIST NOW)
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== SCREEN 2: MAIN GAMEPLAY ==================== -->
+    <main id="gameScreen" class="hidden flex-1 max-w-[1440px] w-full mx-auto p-3 sm:p-4 flex flex-col gap-3">
+        
+        <!-- TOP STATUS BAR -->
+        <section id="topStatusBar" class="bg-slate-900/95 border border-slate-700/90 rounded-xl p-3 sm:p-3.5 shadow-lg transition-all duration-500">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div id="rankInsigniaBox" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-950 border-2 border-amber-500/60 flex flex-col items-center justify-center shrink-0 shadow-inner">
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="uiRankCode" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono-tech text-xs font-extrabold">E-1</span>
+                            <h2 id="uiRankName" class="text-base sm:text-lg font-black text-white">二等兵 (Private)</h2>
+                            <span id="uiName" class="text-sm text-slate-300 font-bold">ジョン・ミラー</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-400 mt-1 font-mono-tech flex-wrap">
+                            <span id="uiTrackBadge" class="px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/60">兵卒・下士官ルート</span>
+                            <span>|</span>
+                            <span id="uiBranch">歩兵科</span>
+                            <span>|</span>
+                            <span id="uiDifficultyBadge" class="text-amber-400 font-bold">NORMAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 sm:gap-4 bg-slate-950/90 px-3.5 py-2 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase font-mono-tech">AGE / SERVICE (1M/TURN)</div>
+                        <div class="text-xs sm:text-sm font-extrabold text-white font-mono-tech">
+                            <span id="uiAge">18</span>歳 <span class="text-slate-400 text-[11px] font-normal">(<span id="uiYear">1</span>年目 <span id="uiMonth">1</span>月 / 定年<span id="uiRetireAge">38</span>歳)</span>
+                        </div>
+                    </div>
+                    <div class="h-8 w-[1px] bg-slate-800 hidden sm:block"></div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase font-mono-tech">SAVINGS / NET PAY</div>
+                        <div class="text-xs sm:text-sm font-extrabold text-emerald-400 font-mono-tech">
+                            $<span id="uiSavings">500</span> <span id="uiNetIncome" class="text-[11px] text-emerald-300/80 font-normal">(+$2,017/月)</span>
+                        </div>
+                    </div>
+                    <div class="h-8 w-[1px] bg-slate-800 hidden sm:block"></div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase font-mono-tech">PHASE</div>
+                        <div id="uiPhaseBadge" class="text-xs sm:text-sm font-black text-emerald-400 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 駐屯地
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-3 pt-3 border-t border-slate-800 items-center">
+                <div class="md:col-span-3 flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-300 w-14 shrink-0">体力</span>
+                    <div class="flex-1 h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700">
+                        <div id="barStamina" class="h-full bg-emerald-500 transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                    <span id="valStamina" class="text-xs font-mono-tech font-bold text-emerald-400 w-12 text-right">100/100</span>
+                </div>
+                <div class="md:col-span-3 flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-300 w-14 shrink-0">メンタル</span>
+                    <div class="flex-1 h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700">
+                        <div id="barMental" class="h-full bg-sky-500 transition-all duration-300" style="width: 100%;"></div>
+                    </div>
+                    <span id="valMental" class="text-xs font-mono-tech font-bold text-sky-400 w-12 text-right">100/100</span>
+                </div>
+                <div class="md:col-span-3 flex items-center justify-between gap-2 bg-slate-950/70 px-2.5 py-1 rounded-lg border border-slate-800 text-xs">
+                    <span id="uiHousingBadge" class="text-amber-300 font-bold truncate">🏠 基地内兵舎</span>
+                    <span class="font-mono-tech text-rose-400 font-bold shrink-0">功績:<span id="valMeritTop">0</span></span>
+                </div>
+                <div class="md:col-span-3 flex items-center gap-1.5 flex-wrap justify-start md:justify-end">
+                    <div id="uiConditions" class="flex flex-wrap gap-1">
+                        <span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs">健康良好</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MIDDLE WORKSPACE -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1">
+            
+            <!-- LEFT/CENTER MAIN AREA (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-3">
+                <div id="visualStage" class="relative rounded-xl border border-slate-700/90 bg-slate-950 overflow-hidden min-h-[270px] sm:min-h-[300px] flex flex-col justify-between p-4 shadow-xl transition-all duration-500">
+                    <div id="stageBgIllustration" class="absolute inset-0 opacity-35 pointer-events-none"></div>
+
+                    <div class="relative z-10 flex justify-between items-start gap-2">
+                        <div class="bg-slate-950/85 backdrop-blur-sm border border-slate-700/80 px-3 py-1.5 rounded-lg">
+                            <div id="stageLocationTitle" class="text-xs font-extrabold text-amber-400 tracking-wide">フォート・リバティ駐屯地 - 兵舎・訓練場</div>
+                            <div id="stageLocationSub" class="text-[11px] text-slate-300">日常の訓練と勤務をこなし、昇進審査や次の派遣に備えよ。</div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button id="btnVoluntaryRetire" onclick="confirmVoluntaryRetire()" class="hidden px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 text-[11px] font-bold transition">
+                                🎖 満期依願退職
+                            </button>
+                            <div class="bg-slate-950/85 border border-amber-500/30 px-2.5 py-1.5 rounded-lg text-xs font-mono-tech text-amber-300 flex items-center gap-1">
+                                🏅 勲章: <span id="valMedals" class="font-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 mt-auto pt-4">
+                        <div class="bg-slate-950/92 backdrop-blur-md border border-slate-600/80 rounded-xl p-3.5 sm:p-4 shadow-2xl flex gap-3.5 items-start">
+                            <div id="speakerAvatar" class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-800 border border-slate-600 shrink-0 flex items-center justify-center overflow-hidden shadow-md">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span id="speakerName" class="text-xs font-extrabold text-amber-400 tracking-wide">指導教官 (Drill Sergeant)</span>
+                                    <span id="eventTag" class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">BRIEFING</span>
+                                </div>
+                                <p id="dialogueText" class="text-sm text-slate-100 leading-relaxed">
+                                    「ようこそ合衆国陸軍へ、二等兵！今日からお前は民間人ではない。まずは駐屯地で体力と射撃の基礎を叩き込め！」
+                                </p>
+                                <div id="eventChoicesContainer" class="hidden mt-3 flex flex-col gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Career History Log -->
+                <div class="bg-slate-900/90 border border-slate-700/90 rounded-xl p-3 flex-1 flex flex-col min-h-[150px] max-h-[210px]">
+                    <div class="flex justify-between items-center mb-1.5 pb-1.5 border-b border-slate-800">
+                        <span class="text-xs font-extrabold text-slate-300 tracking-wider">📋 月次行動・収支・軍歴ログ (SERVICE LOG)</span>
+                        <span id="upOrOutWarning" class="hidden text-[11px] font-mono-tech text-red-400 font-bold animate-pulse">⚠ 昇進停滞警告</span>
+                    </div>
+                    <div id="gameLogList" class="overflow-y-auto space-y-1.5 text-xs font-mono-tech pr-1 flex-1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE PANEL: TABBED MANAGEMENT (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col bg-slate-900/95 border border-slate-700/90 rounded-xl shadow-lg overflow-hidden">
+                <div class="grid grid-cols-3 bg-slate-950 border-b border-slate-800 p-1 gap-1">
+                    <button id="tabBtnStats" onclick="switchRightTab('STATS')" class="py-2 px-2 rounded-lg text-xs font-extrabold transition bg-amber-500 text-slate-950">
+                        🎖 能力・昇進
+                    </button>
+                    <button id="tabBtnSquad" onclick="switchRightTab('SQUAD')" class="py-2 px-2 rounded-lg text-xs font-extrabold transition bg-slate-900 text-slate-400 hover:text-white flex items-center justify-center gap-1">
+                        <span>👥 直属の部下</span>
+                        <span id="squadBadgeDot" class="hidden w-2 h-2 rounded-full bg-emerald-400"></span>
+                    </button>
+                    <button id="tabBtnShop" onclick="switchRightTab('SHOP')" class="py-2 px-2 rounded-lg text-xs font-extrabold transition bg-slate-900 text-slate-400 hover:text-white">
+                        🏠 生活・投資
+                    </button>
+                </div>
+
+                <!-- TAB 1: STATS & PROMOTION BOARD -->
+                <div id="tabContentStats" class="p-3.5 flex-1 flex flex-col justify-between space-y-3 overflow-y-auto">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">📊 兵士能力パラメータ</h3>
+                            <span id="suitabilityBadge" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">区分: 下士官・兵</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs bg-slate-950/70 p-2.5 rounded-xl border border-slate-800">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-slate-300 font-semibold">体力 (PHYS)</span>
+                                    <span id="statPhys" class="font-mono-tech font-bold text-amber-400">20</span>
+                                </div>
+                                <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                    <div id="barPhys" class="h-full bg-amber-500 transition-all" style="width: 20%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-slate-300 font-semibold">射撃 (COMB)</span>
+                                    <span id="statCombat" class="font-mono-tech font-bold text-amber-400">20</span>
+                                </div>
+                                <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                    <div id="barCombat" class="h-full bg-amber-500 transition-all" style="width: 20%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-slate-300 font-semibold">知識 (INTL)</span>
+                                    <span id="statIntel" class="font-mono-tech font-bold text-sky-400">15</span>
+                                </div>
+                                <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                    <div id="barIntel" class="h-full bg-sky-500 transition-all" style="width: 15%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-slate-300 font-semibold">統率 (LEAD)</span>
+                                    <span id="statLead" class="font-mono-tech font-bold text-purple-400">10</span>
+                                </div>
+                                <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                    <div id="barLead" class="h-full bg-purple-500 transition-all" style="width: 10%;"></div>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-slate-300 font-semibold">上官評価 (OER / NCOER)</span>
+                                    <span id="statEval" class="font-mono-tech font-bold text-emerald-400">30</span>
+                                </div>
+                                <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                    <div id="barEval" class="h-full bg-emerald-500 transition-all" style="width: 30%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Promotion Board -->
+                    <div class="bg-slate-950/90 border border-amber-500/40 rounded-xl p-3 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <h3 class="text-xs font-extrabold text-amber-400 uppercase tracking-wider">🎖 昇進審査ボード</h3>
+                                <span id="timeInGradeLabel" class="text-[11px] font-mono-tech text-slate-400">在任: 0ヶ月</span>
+                            </div>
+                            <div class="bg-slate-900 border border-slate-800 rounded-lg p-2 mb-2 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] text-slate-400 font-mono-tech">NEXT TARGET RANK</div>
+                                    <div id="nextRankTitle" class="text-xs sm:text-sm font-black text-white">E-2 一等兵 (PV2)</div>
+                                </div>
+                                <span id="promotionStatusPill" class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-400">
+                                    条件未達成
+                                </span>
+                            </div>
+                            <div class="space-y-1 text-xs" id="promotionChecklist"></div>
+                        </div>
+
+                        <div class="mt-2.5 pt-2 border-t border-slate-800 space-y-1.5">
+                            <button id="btnPromote" onclick="attemptPromotion()" disabled
+                                class="w-full py-2.5 px-3 rounded-lg font-extrabold text-xs tracking-wider transition flex items-center justify-center gap-2 bg-slate-800 text-slate-500 cursor-not-allowed">
+                                <span>昇進審査を受験する (PROMOTION BOARD)</span>
+                            </button>
+                            <button id="btnOCS" onclick="attemptOCS()"
+                                class="hidden w-full py-2.5 px-3 rounded-lg font-extrabold text-xs tracking-wider transition bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white shadow-lg shadow-indigo-500/25 animate-pulse">
+                                🎓 OCS（士官候補生学校）へ志願・転向する！
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Medals Summary -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[11px] font-bold text-slate-400">🏅 受章勲章 & 経歴ハイライト</span>
+                            <span id="deployCountLabel" class="text-[10px] font-mono-tech text-slate-400">派遣: 0回</span>
+                        </div>
+                        <div id="medalListBadges" class="flex flex-wrap gap-1 mb-1.5">
+                            <span class="text-[11px] text-slate-500 italic">受章歴なし</span>
+                        </div>
+                        <div id="miniTimeline" class="max-h-14 overflow-y-auto text-[11px] font-mono-tech text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-1"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: SUBORDINATES PANEL -->
+                <div id="tabContentSquad" class="hidden p-3.5 flex-1 flex flex-col justify-between overflow-y-auto space-y-3">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider">👥 直属の部下・分隊管理</h3>
+                            <span id="mentoredCountBadge" class="text-[11px] font-mono-tech text-slate-400">育成修了: 0名</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mb-3">
+                            軍曹（E-5）または少尉（O-1）以上に昇進すると直属の部下が配属されます。練度・士気が高いと派遣任務で大きな戦果を挙げ、卒業（栄転）時にあなたの評価を大きく高めます。
+                        </p>
+                        <div id="subordinatesContainer" class="space-y-2.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: LIFESTYLE & FINANCE SHOP -->
+                <div id="tabContentShop" class="hidden p-3.5 flex-1 flex flex-col justify-between overflow-y-auto space-y-3">
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs font-extrabold text-amber-400">💵 現在の家計・給与明細 (月額)</span>
+                            <span class="text-xs font-mono-tech font-bold text-white">貯蓄: $<span id="shopSavingsDisplay">500</span></span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-[11px] font-mono-tech bg-slate-900 p-2 rounded-lg">
+                            <div>
+                                <div class="text-slate-400">基本給+手当</div>
+                                <div id="shopGrossPay" class="text-emerald-400 font-bold">+$2,017</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-400">住居・生活費</div>
+                                <div id="shopLivingCost" class="text-rose-400 font-bold">-$0</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-400">毎月純増額</div>
+                                <div id="shopNetPay" class="text-amber-300 font-bold">+$2,017</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">🏠 住居・生活レベル (毎月の自然回復力UP)</h4>
+                        <div id="housingTierList" class="space-y-1.5">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <h4 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">🛒 自己投資・リフレッシュ (駐屯地限定)</h4>
+                            <span id="shopDeployLockNote" class="hidden text-[10px] text-red-400 font-bold">※派遣中は利用不可</span>
+                        </div>
+                        <div id="lifestyleItemsList" class="space-y-1.5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM COMMAND PANEL -->
+        <section class="bg-slate-900/95 border border-slate-700/90 rounded-xl p-3 sm:p-4 shadow-xl">
+            <div class="flex justify-between items-center mb-2.5">
+                <h3 id="commandDeckTitle" class="text-xs font-black text-slate-200 uppercase tracking-wider">
+                    ⚡ 行動コマンド (1ターン = 1ヶ月経過 / 毎月給与支給)
+                </h3>
+                <span id="commandHint" class="text-[11px] text-slate-400 hidden sm:inline">階級・ルート・フェーズに応じて任務が変化します</span>
+            </div>
+
+            <div id="dynamicCommandGrid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== SCREEN 3: DD FORM 214 ENDING ==================== -->
+    <main id="endingScreen" class="hidden flex-1 flex items-center justify-center p-4">
+        <div class="max-w-3xl w-full dd214-card border-2 border-amber-500/60 rounded-2xl overflow-hidden">
+            <div id="endingHeader" class="bg-gradient-to-r from-slate-950 via-[#1f291e] to-slate-950 p-6 sm:p-8 border-b border-slate-700 text-center relative">
+                <div class="text-[10px] font-mono-tech text-slate-400 tracking-widest mb-1">
+                    CERTIFICATE OF RELEASE OR DISCHARGE FROM ACTIVE DUTY // DD FORM 214
+                </div>
+                <div id="endingBadge" class="inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono-tech mb-2">
+                    HONORABLE RETIREMENT // 名誉除隊
+                </div>
+                <h2 id="endingTitle" class="text-2xl sm:text-3xl font-black text-white mb-1">
+                    軍歴証明書 (SERVICE RECORD)
+                </h2>
+                <p id="endingSubtitle" class="text-xs sm:text-sm text-slate-300">
+                    あなたは長年にわたる軍務を全うし、誇り高きキャリアを締めくくった。
+                </p>
+            </div>
+
+            <div class="p-6 sm:p-8 space-y-5">
+                <div class="bg-slate-950/90 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-center sm:text-left">
+                        <div class="text-[11px] text-amber-400 font-mono-tech uppercase">AWARDED CAREER TITLE</div>
+                        <div id="endCareerTitle" class="text-xl sm:text-2xl font-black text-white mt-0.5">
+                            「現場を支えた不屈の軍曹」
+                        </div>
+                        <div id="endNameBranch" class="text-xs text-slate-400 mt-1">ジョン・ミラー / 歩兵科 (NORMAL)</div>
+                    </div>
+                    <div class="text-center bg-slate-900 px-5 py-3 rounded-xl border border-slate-800 shrink-0">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">OVERALL GRADE</div>
+                        <div id="endGrade" class="text-3xl sm:text-4xl font-black text-emerald-400 font-mono-tech">RANK A</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">FINAL RANK</div>
+                        <div id="endFinalRank" class="text-sm font-extrabold text-amber-400 mt-1">E-7 一等軍曹</div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">TOTAL SERVICE</div>
+                        <div id="endServiceYears" class="text-sm font-extrabold text-white font-mono-tech mt-1">20年 0ヶ月</div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">FINAL SAVINGS & HOME</div>
+                        <div id="endFinance" class="text-sm font-extrabold text-emerald-400 font-mono-tech mt-1">$120,000</div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">DEPLOYMENTS</div>
+                        <div id="endDeployCount" class="text-sm font-extrabold text-rose-400 font-mono-tech mt-1">4回</div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">SUBORDINATES MENTORED</div>
+                        <div id="endSubordinates" class="text-sm font-extrabold text-sky-400 font-mono-tech mt-1">6名育成</div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl">
+                        <div class="text-[10px] text-slate-400 font-mono-tech">DECORATIONS</div>
+                        <div id="endMedalCount" class="text-sm font-extrabold text-amber-300 font-mono-tech mt-1">3個</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">🏅 受章勲章一覧 (DECORATIONS & MEDALS)</h3>
+                    <div id="endMedalsList" class="flex flex-wrap gap-1.5 text-xs"></div>
+                </div>
+
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1.5">🌅 除隊後の第二の人生 (EPILOGUE)</h3>
+                    <p id="endEpilogueText" class="text-sm text-slate-200 leading-relaxed"></p>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">📜 キャリアの歩み (CAREER TIMELINE)</h3>
+                    <div id="endTimeline" class="max-h-40 overflow-y-auto bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-1.5 text-xs font-mono-tech text-slate-300">
+                    </div>
+                </div>
+
+                <button onclick="resetToTitle()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black text-sm tracking-wider transition shadow-lg">
+                    新しい兵士で再び入隊する (PLAY AGAIN)
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== HELP / RANK TREE MODAL ==================== -->
+    <div id="helpModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-base font-black text-amber-400 tracking-wide">📖 ゲームガイド（昇進・部下・給料＆ハード緩和仕様）</h3>
+                <button onclick="closeHelpModal()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">✕ 閉じる</button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                <div>
+                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-amber-500 pl-2">1. 1ターン＝1ヶ月進行と定年年齢</h4>
+                    <p>18歳（二等兵 E-1）で入隊し、原則<strong>勤続20年（38歳）</strong>で満期定年を迎えます（※高階級へ昇進すると定年年齢が最大48歳・勤続30年まで延長されます）。約3年ごとに<strong>9〜12ヶ月間の海外派遣</strong>が発令されます。</p>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-red-500 pl-2">2. HARDモード「Up or Out（昇進期限）」の緩和＆救済措置</h4>
+                    <p>HARDモードでは各階級に在任期限（若手48〜60ヶ月、中堅・上級72〜120ヶ月）が設定されています。<strong>残り12ヶ月（1年）を切ると警告表示</strong>が出現し、万が一期限に到達しても<strong>「上官評価」や「功績」が高い場合は特例延長（ウェイバー）審査</strong>が発生して期限を延長できます。</p>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-emerald-500 pl-2">3. 直属の部下システム（三等軍曹 E-5 / 少尉 O-1 で解禁）</h4>
+                    <p>リーダー階級に昇進すると、個性豊かな直属の部下（2〜3名）が配属されます。駐屯地で指導したり差し入れをしたりして<strong>練度・士気</strong>を高めておくと、派遣任務での大活躍や、部下の栄転（卒業）時にあなたの<strong>上官評価が大きくアップ</strong>します！</p>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-sky-500 pl-2">4. 月給・貯蓄と生活レベル（出世の特権）</h4>
+                    <p>毎月、階級に応じた基本給が支給されます（海外派遣中は<strong>危険手当ボーナス</strong>も加算！）。貯めたお金は<strong>「生活・投資」タブ</strong>で住居のアップグレードや自己投資に使え、毎月の体力・メンタル回復効率が劇的に向上します。</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <h5 class="font-bold text-emerald-400 mb-1.5">🎖 兵卒・下士官 (Enlisted / 月給目安)</h5>
+                        <ul class="space-y-0.5 text-xs font-mono-tech text-slate-300">
+                            <li>E-1 二等兵 ($2,017) → E-3 上等兵 ($2,377)</li>
+                            <li>E-4 伍長 ($2,633) ※OCS転向対象</li>
+                            <li>E-5 三等軍曹 ($2,872) ※部下解禁・OCS対象</li>
+                            <li>E-6 二等軍曹 ($3,135) → E-7 一等軍曹 ($3,624)</li>
+                            <li>E-8 曹長 ($5,221) → E-9 最先任上級曹長 ($6,370)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <h5 class="font-bold text-amber-400 mb-1.5">⭐ 将校 (Officer / NORMAL以上解禁)</h5>
+                        <ul class="space-y-0.5 text-xs font-mono-tech text-slate-300">
+                            <li>O-1 少尉 ($3,826) ※OCS任官・部下解禁</li>
+                            <li>O-2 中尉 ($4,408) → O-3 大尉 ($5,102)</li>
+                            <li>O-4 少佐 ($5,802) → O-5 中佐 ($6,725)</li>
+                            <li>O-6 大佐 ($8,068) → O-7 准将 ($10,635)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CONFIRMATION MODAL ==================== -->
+    <div id="customModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-5 shadow-2xl">
+            <h3 id="modalTitle" class="text-base font-bold text-white mb-2">確認</h3>
+            <p id="modalBody" class="text-sm text-slate-300 mb-5 leading-relaxed">現在のキャリアを中断してタイトル画面に戻りますか？</p>
+            <div class="flex justify-end gap-2.5">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">キャンセル</button>
+                <button id="modalConfirmBtn" onclick="resetToTitle()" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-bold text-white">実行する</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== SOUND ENGINE (Web Audio API) ====================
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+            const lbl = document.getElementById('soundLabel');
+            if (lbl) lbl.textContent = soundEnabled ? 'SFX: ON' : 'SFX: OFF';
+        }
+
+        function playSfx(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(190, now + 0.06);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.06);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'cash') {
+                    [587.33, 880].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        g.gain.setValueAtTime(0.1, now + idx * 0.08);
+                        g.gain.exponentialRampToValueAtTime(0.005, now + idx * 0.08 + 0.2);
+                        o.start(now + idx * 0.08);
+                        o.stop(now + idx * 0.08 + 0.2);
+                    });
+                } else if (type === 'promote') {
+                    [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sawtooth';
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.11);
+                        g.gain.setValueAtTime(0.08, now + idx * 0.11);
+                        g.gain.exponentialRampToValueAtTime(0.005, now + idx * 0.11 + 0.35);
+                        o.start(now + idx * 0.11);
+                        o.stop(now + idx * 0.11 + 0.35);
+                    });
+                } else if (type === 'alert') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(210, now);
+                    osc.frequency.linearRampToValueAtTime(135, now + 0.25);
+                    gain.gain.setValueAtTime(0.13, now);
+                    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'deploy') {
+                    [330, 440, 330, 440].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'square';
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        g.gain.setValueAtTime(0.07, now + idx * 0.12);
+                        g.gain.exponentialRampToValueAtTime(0.005, now + idx * 0.12 + 0.1);
+                        o.start(now + idx * 0.12);
+                        o.stop(now + idx * 0.12 + 0.1);
+                    });
+                }
+            } catch (e) { /* Ignore audio errors */ }
+        }
+
+        // ==================== RANDOM NAME & SUBORDINATE POOLS ====================
+        const FIRST_NAMES = ['ジョン', 'マイケル', 'デイビッド', 'クリス', 'ライアン', 'タイラー', 'ブランドン', 'ケビン', 'ダニエル', 'アレックス', 'エリック', 'ネイサン', 'サラ', 'エミリー'];
+        const LAST_NAMES = ['ミラー', 'スミス', 'アンダーソン', 'テイラー', 'ウォーカー', 'ハリス', 'クラーク', 'ロビンソン', 'ヤング', 'キング', 'スコット', 'アダムス', 'カーター', 'ミッチェル'];
+
+        const SUBORDINATE_TRAITS = [
+            { label: '真面目だが気弱', desc: '指導で大きく伸びるが派遣時はメンタルケアが必要', skillBonus: 0, moraleBonus: -5 },
+            { label: '問題児だが射撃の天才', desc: '射撃戦闘力は抜群。士気が下がるとトラブルを起こしやすい', skillBonus: 12, moraleBonus: -10 },
+            { label: '努力家の若手', desc: 'バランス良く成長し、指導効果を吸収しやすい優等生', skillBonus: 5, moraleBonus: 5 },
+            { label: '家族思いのベテラン', desc: '精神的に安定しており分隊のまとめ役になる', skillBonus: 8, moraleBonus: 10 },
+            { label: '熱血漢の突撃兵', desc: '前線任務で頼りになるが、負傷リスクもやや高め', skillBonus: 10, moraleBonus: 5 }
+        ];
+
+        function generateRandomName() {
+            playSfx('click');
+            const f = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+            const l = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+            document.getElementById('inputName').value = `${f}・${l}`;
+        }
+
+        // ==================== RANK, PAY & LIFESTYLE DATABASES ====================
+        // Relaxed maxMonthsHard limits (generous 48 to 120 months) so HARD mode feels strategic rather than punishing
+        const RANKS = {
+            ENLISTED: [
+                { code: 'E-1', name: '二等兵 (Private)', pay: 2017, maxMonthsHard: 48, req: null },
+                { code: 'E-2', name: '一等兵 (PV2)', pay: 2261, maxMonthsHard: 54, req: { months: 6, phys: 24, eval: 35 } },
+                { code: 'E-3', name: '上等兵 (PFC)', pay: 2377, maxMonthsHard: 60, req: { months: 16, phys: 34, combat: 30, eval: 45 } },
+                { code: 'E-4', name: '伍長 (Corporal)', pay: 2633, maxMonthsHard: 72, req: { months: 28, combat: 42, intel: 30, eval: 54 } },
+                { code: 'E-5', name: '三等軍曹 (Sergeant)', pay: 2872, maxMonthsHard: 84, req: { months: 44, combat: 52, lead: 38, eval: 64, merit: 20 } },
+                { code: 'E-6', name: '二等軍曹 (Staff Sergeant)', pay: 3135, maxMonthsHard: 96, req: { months: 68, combat: 62, lead: 52, intel: 46, eval: 74, merit: 45, deploy: 1 } },
+                { code: 'E-7', name: '一等軍曹 (SFC)', pay: 3624, maxMonthsHard: 108, req: { months: 102, lead: 66, intel: 58, eval: 82, merit: 75, deploy: 2 } },
+                { code: 'E-8', name: '曹長 (Master Sergeant)', pay: 5221, maxMonthsHard: 120, req: { months: 140, lead: 78, intel: 68, eval: 88, merit: 105, deploy: 2 } },
+                { code: 'E-9', name: '最先任上級曹長 (Sergeant Major)', pay: 6370, maxMonthsHard: 999, req: { months: 180, lead: 90, intel: 80, eval: 95, merit: 135, deploy: 3 } }
+            ],
+            OFFICER: [
+                { code: 'O-1', name: '少尉 (2nd Lieutenant)', pay: 3826, maxMonthsHard: 60, req: null },
+                { code: 'O-2', name: '中尉 (1st Lieutenant)', pay: 4408, maxMonthsHard: 72, req: { months: 52, lead: 50, intel: 55, eval: 62 } },
+                { code: 'O-3', name: '大尉 (Captain)', pay: 5102, maxMonthsHard: 84, req: { months: 76, lead: 62, intel: 66, eval: 74, merit: 35, deploy: 1 } },
+                { code: 'O-4', name: '少佐 (Major)', pay: 5802, maxMonthsHard: 96, req: { months: 112, lead: 74, intel: 76, eval: 82, merit: 65, deploy: 2 } },
+                { code: 'O-5', name: '中佐 (Lieutenant Colonel)', pay: 6725, maxMonthsHard: 108, req: { months: 152, lead: 84, intel: 84, eval: 90, merit: 95, deploy: 2 } },
+                { code: 'O-6', name: '大佐 (Colonel)', pay: 8068, maxMonthsHard: 120, req: { months: 196, lead: 92, intel: 90, eval: 95, merit: 125, deploy: 3 } },
+                { code: 'O-7', name: '准将 (Brigadier General)', pay: 10635, maxMonthsHard: 999, req: { months: 240, lead: 96, intel: 94, eval: 98, merit: 155, deploy: 3 } }
+            ]
+        };
+
+        const HOUSING_TIERS = [
+            { id: 0, name: '基地内兵舎 (Barracks)', icon: '🛏️', initCost: 0, monthlyCost: 0, stamRegen: 2, mentalRegen: 1, desc: '無料の相部屋生活。最低限の休息は取れるがプライバシーは少ない。' },
+            { id: 1, name: '基地外アパート (Off-Base Apt)', icon: '🏢', initCost: 3000, monthlyCost: 850, stamRegen: 5, mentalRegen: 5, desc: '基地の外で一人暮らしを開始。仕事と私生活の切り替えができ精神が安定。' },
+            { id: 2, name: '郊外のマイホーム (Suburban House)', icon: '🏡', initCost: 12000, monthlyCost: 1650, stamRegen: 8, mentalRegen: 9, desc: '庭付きの立派な一戸建て。家族や愛犬と過ごす穏やかな時間が疲労を癒す。' },
+            { id: 3, name: '高級レジデンス (Executive Estate)', icon: '🏰', initCost: 35000, monthlyCost: 2900, stamRegen: 12, mentalRegen: 14, desc: 'プール・ホームジム完備の邸宅。最高級の暮らしで毎月心身が大幅に回復。' }
+        ];
+
+        const LIFESTYLE_ITEMS = [
+            { id: 'DINNER_TRIP', name: '🍽️ 高級ディナー＆週末小旅行', cost: 600, desc: 'メンタル+28 / PTSD緩和', garrisonOnly: true },
+            { id: 'ONLINE_COLLEGE', name: '💻 オンライン大学・専門講座受講', cost: 1200, desc: '知識+6 / 評価+2', garrisonOnly: true },
+            { id: 'PERSONAL_GYM', name: '🏋️ パーソナルトレーナー契約', cost: 1000, desc: '体力+6 / 体力(HP)+15', garrisonOnly: true },
+            { id: 'SQUAD_TREAT', name: '🍕 直属の部下へピザ＆装備差し入れ', cost: 800, desc: '全部下の士気+18 / 統率+3', garrisonOnly: false }
+        ];
+
+        const BRANCH_INFO = {
+            INFANTRY: { name: '歩兵科 (Infantry)', phys: 24, combat: 24, intel: 12, lead: 12 },
+            SUPPORT:  { name: '衛生・後方支援', phys: 18, combat: 15, intel: 22, lead: 16 },
+            INTEL:    { name: '情報・通信科', phys: 15, combat: 15, intel: 28, lead: 15 }
+        };
+
+        const DIFFICULTY_MODS = {
+            EASY:   { label: 'EASY (体験モード)', injuryMult: 0.35, reqScale: 0.80, canDie: false, upOrOut: false, allowOCS: false, color: 'text-emerald-400' },
+            NORMAL: { label: 'NORMAL (標準モード)', injuryMult: 1.0,  reqScale: 1.0,  canDie: false, upOrOut: false, allowOCS: true,  color: 'text-amber-400' },
+            HARD:   { label: 'HARD (実戦リアル)', injuryMult: 1.40, reqScale: 1.02, canDie: true,  upOrOut: true,  allowOCS: true,  color: 'text-red-400' }
+        };
+
+        // ==================== GAME STATE ====================
+        let state = {};
+
+        function startGame() {
+            playSfx('promote');
+            const nameInput = document.getElementById('inputName').value.trim() || 'ジョン・ミラー';
+            const branchKey = document.getElementById('inputBranch').value;
+            const diffKey = document.querySelector('input[name="difficulty"]:checked').value;
+            const bInit = BRANCH_INFO[branchKey];
+
+            state = {
+                name: nameInput,
+                branchKey: branchKey,
+                branchName: bInit.name,
+                difficulty: diffKey,
+                turn: 1, // 1 turn = 1 month. 240 turns = 20 years (Age 38), up to 360 turns = 30 years (Age 48)
+                maxTurns: 240,
+                track: 'ENLISTED',
+                rankIndex: 0,
+                monthsInGrade: 0,
+                bonusHardMonths: 0, // Granted via Special Waiver if near Up or Out limit
+                waiverUsedForRank: false,
+                stamina: 100,
+                mental: 100,
+                savings: 500,
+                housingTier: 0,
+                stats: {
+                    phys: bInit.phys,
+                    combat: bInit.combat,
+                    intel: bInit.intel,
+                    lead: bInit.lead,
+                    eval: 30,
+                    merit: 0
+                },
+                phase: 'GARRISON',
+                deployMonthsLeft: 0,
+                deployCount: 0,
+                nextDeployTurn: 28,
+                conditions: [],
+                medals: [],
+                subordinates: [],
+                mentoredCount: 0,
+                awaitingChoice: false,
+                activeRightTab: 'STATS',
+                highlights: []
+            };
+
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('endingScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('resetBtn').classList.remove('hidden');
+
+            switchRightTab('STATS');
+            addLog(`18歳でアメリカ陸軍（${state.branchName}）に入隊。二等兵（E-1）としてのキャリアが始まった。`, 'text-amber-300 font-bold');
+            addHighlight(`18歳 (1年目): ${state.branchName}に二等兵(E-1)として入隊`);
+
+            setDialogue(
+                '指導教官 (Drill Sergeant)',
+                'INSTRUCTOR',
+                `「ようこそ合衆国陸軍へ、${state.name}二等兵！1ヶ月ごとの訓練と勤務を積み重ね、まずは一等兵（E-2）への昇進を目指せ！給料を貯めて生活環境を整えることも忘れるな！」`,
+                'ENLISTMENT'
+            );
+
+            renderAll();
+        }
+
+        // ==================== RIGHT PANEL TAB SWITCHING ====================
+        function switchRightTab(tabName) {
+            state.activeRightTab = tabName;
+            const tabs = ['STATS', 'SQUAD', 'SHOP'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tabBtn${t.charAt(0) + t.slice(1).toLowerCase()}`);
+                const content = document.getElementById(`tabContent${t.charAt(0) + t.slice(1).toLowerCase()}`);
+                if (t === tabName) {
+                    btn.className = 'py-2 px-2 rounded-lg text-xs font-extrabold transition bg-amber-500 text-slate-950 flex items-center justify-center gap-1';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'py-2 px-2 rounded-lg text-xs font-extrabold transition bg-slate-900 text-slate-400 hover:text-white flex items-center justify-center gap-1';
+                    content.classList.add('hidden');
+                }
+            });
+            if (tabName === 'SQUAD') {
+                document.getElementById('squadBadgeDot').classList.add('hidden');
+            }
+        }
+
+        // ==================== SUBORDINATE SYSTEM ====================
+        function hasSubordinatePrivilege() {
+            return state.track === 'OFFICER' || state.rankIndex >= 4;
+        }
+
+        function ensureSubordinatesAssigned(notify = true) {
+            if (!hasSubordinatePrivilege()) return;
+            const targetCount = (state.track === 'OFFICER' || state.rankIndex >= 6) ? 3 : 2;
+            let addedNames = [];
+
+            while (state.subordinates.length < targetCount) {
+                const sub = createNewSubordinate();
+                state.subordinates.push(sub);
+                addedNames.push(`${sub.rank} ${sub.name}`);
+            }
+
+            if (addedNames.length > 0 && notify) {
+                document.getElementById('squadBadgeDot').classList.remove('hidden');
+                addLog(`👥 【部下配属】新たに ${addedNames.join('、')} があなたの直属の部下として配属された！`, 'text-emerald-300 font-bold');
+            }
+        }
+
+        function createNewSubordinate() {
+            const f = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+            const l = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+            const trait = SUBORDINATE_TRAITS[Math.floor(Math.random() * SUBORDINATE_TRAITS.length)];
+            const subRanks = state.track === 'OFFICER' ? ['三等軍曹', '伍長', '上等兵'] : ['上等兵', '一等兵', '二等兵'];
+            const r = subRanks[Math.floor(Math.random() * subRanks.length)];
+
+            return {
+                id: Date.now() + Math.random(),
+                name: `${f}・${l}`,
+                rank: r,
+                trait: trait,
+                skill: clamp(25 + rand(0, 15) + trait.skillBonus, 10, 85),
+                morale: clamp(60 + rand(-5, 10) + trait.moraleBonus, 30, 95),
+                monthsServed: 0,
+                injured: false
+            };
+        }
+
+        function updateSubordinatesMonthly(isDeploy) {
+            if (!hasSubordinatePrivilege() || state.subordinates.length === 0) return;
+
+            for (let i = state.subordinates.length - 1; i >= 0; i--) {
+                const sub = state.subordinates[i];
+                sub.monthsServed++;
+
+                if (isDeploy) {
+                    sub.skill = clamp(sub.skill + rand(1, 3), 0, 100);
+                    sub.morale = clamp(sub.morale - rand(2, 5), 0, 100);
+                } else {
+                    sub.skill = clamp(sub.skill + 1, 0, 100);
+                    if (sub.injured && Math.random() < 0.45) {
+                        sub.injured = false;
+                        addLog(`🏥 部下の ${sub.rank} ${sub.name} が負傷から回復し任務に復帰した。`, 'text-emerald-300');
+                    }
+                }
+
+                if (!isDeploy && sub.monthsServed >= 24 && sub.skill >= 80) {
+                    state.mentoredCount++;
+                    state.stats.eval = clamp(state.stats.eval + 5, 0, 100);
+                    state.stats.lead = clamp(state.stats.lead + 3, 0, 100);
+                    addLog(`🎓 【部下の栄転】あなたの指導を受けた ${sub.rank} ${sub.name} が優秀な成績で昇進・栄転した！（上官評価 +5, 統率 +3）`, 'text-amber-300 font-bold');
+                    addHighlight(`${getAge()}歳: 部下 ${sub.name} を一人前に育て上げ栄転させる`);
+                    state.subordinates.splice(i, 1);
+                }
+            }
+            ensureSubordinatesAssigned(true);
+        }
+
+        // ==================== MONTHLY FINANCE & HOUSING ====================
+        function getMonthlyFinanceBreakdown() {
+            const rank = getCurrentRank();
+            const longevityBonus = Math.floor((state.turn - 1) / 24) * 180;
+            const basePay = rank.pay + longevityBonus;
+            const hazardPay = state.phase === 'DEPLOYMENT' ? Math.round(basePay * 0.35) + 450 : 0;
+            const gross = basePay + hazardPay;
+            const livingCost = state.phase === 'DEPLOYMENT' ? Math.round(HOUSING_TIERS[state.housingTier].monthlyCost * 0.5) : HOUSING_TIERS[state.housingTier].monthlyCost;
+            return {
+                gross,
+                hazardPay,
+                livingCost,
+                net: gross - livingCost
+            };
+        }
+
+        function upgradeHousing(tierId) {
+            if (state.phase === 'DEPLOYMENT') {
+                setDialogue('人事・総務担当', 'OFFICER', '「海外派遣中は本国での不動産契約・引っ越し手続きはできません。帰還後に手続きしてください。」', 'GARRISON ONLY');
+                playSfx('alert');
+                return;
+            }
+            const tier = HOUSING_TIERS[tierId];
+            if (!tier || tierId <= state.housingTier) return;
+            if (state.savings < tier.initCost) {
+                playSfx('alert');
+                return;
+            }
+
+            playSfx('cash');
+            state.savings -= tier.initCost;
+            state.housingTier = tierId;
+            state.mental = clamp(state.mental + 20, 0, 100);
+            state.stamina = clamp(state.stamina + 15, 0, 100);
+
+            addLog(`🏠 【生活レベル向上】「${tier.name}」へ転居した！毎月の心身自然回復量がアップ！（初期費用 -$${tier.initCost.toLocaleString()}）`, 'text-amber-300 font-bold');
+            addHighlight(`${getAge()}歳: 生活水準を「${tier.name}」へアップグレード`);
+            setDialogue('不動産・住宅管理窓口', 'OFFICER', `「新居『${tier.name}』へのご入居おめでとうございます！快適な住環境で毎月の疲労とストレスが大きく軽減されます。」`, 'LIFESTYLE UP');
+            renderAll();
+        }
+
+        function buyLifestyleItem(itemId) {
+            const item = LIFESTYLE_ITEMS.find(x => x.id === itemId);
+            if (!item) return;
+            if (item.garrisonOnly && state.phase === 'DEPLOYMENT') {
+                playSfx('alert');
+                return;
+            }
+            if (state.savings < item.cost) {
+                playSfx('alert');
+                return;
+            }
+            if (itemId === 'SQUAD_TREAT' && state.subordinates.length === 0) {
+                setDialogue('補給係', 'SOLDIER', '「現在あなたには直属の部下が配属されていません（E-5軍曹またはO-1少尉以上で解禁）。」', 'NO SQUAD');
+                playSfx('alert');
+                return;
+            }
+
+            playSfx('cash');
+            state.savings -= item.cost;
+
+            if (itemId === 'DINNER_TRIP') {
+                state.mental = clamp(state.mental + 28, 0, 100);
+                if (state.conditions.includes('PTSD') && Math.random() < 0.45) {
+                    removeCondition('PTSD');
+                    addLog(`🍽️ 豪華なディナーと小旅行で心が癒され、PTSDが寛解した！（-$${item.cost}）`, 'text-emerald-300 font-bold');
+                } else {
+                    addLog(`🍽️ 高級ディナーと週末の小旅行を楽しみリフレッシュした！（メンタル +28 / -$${item.cost}）`, 'text-sky-300');
+                }
+            } else if (itemId === 'ONLINE_COLLEGE') {
+                state.stats.intel = clamp(state.stats.intel + 6, 0, 100);
+                state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                addLog(`💻 オンライン大学の軍事・マネジメント講座を修了した！（知識 +6, 評価 +2 / -$${item.cost}）`, 'text-sky-300');
+            } else if (itemId === 'PERSONAL_GYM') {
+                state.stats.phys = clamp(state.stats.phys + 6, 0, 100);
+                state.stamina = clamp(state.stamina + 15, 0, 100);
+                addLog(`🏋️ パーソナルトレーナーの指導で肉体を強化した！（体力能力 +6, 体力HP +15 / -$${item.cost}）`, 'text-amber-300');
+            } else if (itemId === 'SQUAD_TREAT') {
+                state.subordinates.forEach(s => {
+                    s.morale = clamp(s.morale + 18, 0, 100);
+                });
+                state.stats.lead = clamp(state.stats.lead + 3, 0, 100);
+                addLog(`🍕 直属の部下たちに温かい食事と装備品を差し入れし、分隊の士気が急上昇した！（部下士気 +18, 統率 +3 / -$${item.cost}）`, 'text-emerald-300');
+            }
+
+            renderAll();
+        }
+
+        // ==================== DYNAMIC COMMAND DEFINITIONS ====================
+        function getAvailableCommands() {
+            if (state.phase === 'DEPLOYMENT') {
+                if (state.track === 'OFFICER') {
+                    return [
+                        { id: 'OFF_DEP_COMMAND', title: '🗺️ 中隊/大隊の作戦指揮', desc: '前線作戦の立案と指揮を執る。功績大。', cost: '功績↑↑ 統率↑ / 精神-14', style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'OFF_DEP_INSPECT', title: '🫡 前線視察・士気鼓舞', desc: '前線を回り部下と兵士を鼓舞する。', cost: '功績↑ 部下士気↑ / リスク中', style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'OFF_DEP_LOGISTICS', title: '📡 後方支援・兵站調整', desc: '補給線と情報網を最適化し被害を防ぐ。', cost: '知識↑↑ 功績↑ / 安全', style: 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-600/70 text-sky-300' },
+                        { id: 'DEPLOY_REST', title: '⛺ 司令部待機・野戦休息', desc: '作戦の合間に心身を休め傷を癒す。', cost: '体力・メンタル回復', style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                    ];
+                } else {
+                    return [
+                        { id: 'ENL_DEP_PATROL', title: '⚔️ パトロール任務', desc: '危険地帯の偵察・掃討。大きな戦果。', cost: '功績↑↑ 評価↑ / リスク高', style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'ENL_DEP_DEFEND', title: '🛡️ 拠点防衛・検問', desc: '前線基地（FOB）の警備。堅実な戦果。', cost: '功績↑ 射撃↑ / リスク中', style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'ENL_DEP_SQUAD', title: '🧭 部下のケア・装備点検', desc: '部下の練度と士気を高め事故を防ぐ。', cost: '部下練度・士気↑ 統率↑', style: 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-600/70 text-purple-300' },
+                        { id: 'DEPLOY_REST', title: '🏥 野戦病院ケア・休息', desc: '治療と休養を取り英気を養う。', cost: '体力・メンタル回復', style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                    ];
+                }
+            }
+
+            if (state.track === 'OFFICER') {
+                return [
+                    { id: 'OFF_GAR_PLAN', title: '🗺️ 作戦計画立案', desc: '演習シナリオと防衛計画を策定する。', cost: '知識↑↑ 統率↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'OFF_GAR_MENTOR', title: '👥 小隊・部下の統率指導', desc: '直属の部下たちの訓練を直接監督する。', cost: '部下練度↑↑ 統率↑ / 体力-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
+                    { id: 'OFF_GAR_STAFF', title: '🤝 幕僚会議・人脈形成', desc: '上級司令部や他部隊将校と連携を深める。', cost: '評価↑↑ 知識↑ / 精神-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'OFF_GAR_WARCOLLEGE', title: '🎓 軍事大学・戦略研究', desc: '高級将校向けの戦略・リーダーシップ研究。', cost: '統率↑↑ 知識↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-indigo-500 text-indigo-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・社交リフレッシュ', desc: '休暇と医療ケアで心身を回復・治療する。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                ];
+            }
+
+            if (state.rankIndex <= 3) {
+                return [
+                    { id: 'ENL_JR_PHYS', title: '🏃 体力錬成 (PT)', desc: '基礎体力と耐久力を徹底的に鍛える。', cost: '体力↑↑ / 体力HP-14', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_JR_SHOOT', title: '🎯 射撃訓練・戦術基礎', desc: '小火器の射撃精度と基本戦術を習得。', cost: '射撃↑↑ / 体力HP-14', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_JR_DUTY', title: '📚 戦術座学・装備整備', desc: '軍規・戦術マニュアルの学習と整備勤務。', cost: '知識↑↑ 評価↑ / 精神-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'ENL_JR_GREET', title: '🫡 上官への報告・雑用', desc: '上官に顔を売り、仲間との信頼を築く。', cost: '評価↑↑ 統率↑ / 精神-6', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・外出リフレッシュ', desc: '兵舎での休息と通院で傷や疲れを癒す。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                ];
+            } else {
+                return [
+                    { id: 'ENL_NCO_TACTICS', title: '🎖️ 部隊戦術訓練', desc: '分隊・小隊の実戦的な戦闘訓練を指揮。', cost: '射撃↑ 統率↑↑ / 体力HP-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_NCO_MENTOR', title: '👥 部下の個別指導', desc: '直属の部下をマンツーマンで鍛え上げる。', cost: '部下練度・士気↑↑ 統率↑', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
+                    { id: 'ENL_NCO_ACADEMY', title: '📚 専門課程・下士官学校', desc: 'NCOアカデミーで高度な管理・戦術を学ぶ。', cost: '知識↑↑ 統率↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'ENL_NCO_CLUB', title: '🤝 上官・司令部との調整', desc: '将校団や上級曹長との連携を強化する。', cost: '評価↑↑ 知識↑ / 精神-8', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・家族/趣味の時間', desc: '心身のリフレッシュと負傷・PTSD治療。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                ];
+            }
+        }
+
+        // ==================== MONTHLY TURN EXECUTION ====================
+        function executeTurn(actionId) {
+            if (state.awaitingChoice) return;
+            playSfx('click');
+
+            const hasHeavyInjury = state.conditions.includes('INJURED_HEAVY');
+            const hasLightInjury = state.conditions.includes('INJURED_LIGHT');
+            const hasPTSD = state.conditions.includes('PTSD');
+            const isStaffRole = state.conditions.includes('REASSIGNED_STAFF');
+
+            const agePenalty = getAge() >= 36 ? 1 : 0;
+            const frontPenalty = (hasHeavyInjury ? 2 : (hasLightInjury ? 1 : 0)) + agePenalty;
+            const staffBonus = isStaffRole ? 2 : 0;
+
+            let msg = '';
+            let speaker = '部隊レポート';
+            let avatarType = state.track === 'OFFICER' ? 'OFFICER' : 'INSTRUCTOR';
+            let tag = 'MONTHLY REPORT';
+
+            switch (actionId) {
+                case 'ENL_JR_PHYS': {
+                    if (hasHeavyInjury) {
+                        setDialogue('軍医 (Army Medic)', 'MEDIC', '「重傷の状態で激しい体力錬成は禁止だ！まずは休養コマンドで治療に専念しろ！」', 'MEDICAL STOP');
+                        playSfx('alert');
+                        return;
+                    }
+                    const g = Math.max(2, rand(3, 5) - frontPenalty);
+                    state.stats.phys = clamp(state.stats.phys + g, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + 1, 0, 100);
+                    state.stamina = clamp(state.stamina - 14, 0, 100);
+                    state.mental = clamp(state.mental - 3, 0, 100);
+                    msg = `早朝からのPT（体力錬成）と重装備行軍を完遂した。（体力 +${g}, 評価 +1）`;
+                    speaker = '指導教官 (Drill Sgt)';
+                    break;
+                }
+                case 'ENL_JR_SHOOT': {
+                    const g = Math.max(2, rand(3, 5) - frontPenalty);
+                    state.stats.combat = clamp(state.stats.combat + g, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + 1, 0, 100);
+                    state.stamina = clamp(state.stamina - 14, 0, 100);
+                    state.mental = clamp(state.mental - 4, 0, 100);
+                    msg = `射撃場での実弾演習と近接戦闘ドリルで好成績を収めた。（射撃 +${g}, 評価 +1）`;
+                    speaker = '射撃教官 (Range NCO)';
+                    break;
+                }
+                case 'ENL_JR_DUTY': {
+                    const g = rand(3, 5) + staffBonus;
+                    state.stats.intel = clamp(state.stats.intel + g, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stamina = clamp(state.stamina - 8, 0, 100);
+                    state.mental = clamp(state.mental - 10, 0, 100);
+                    msg = `戦術マニュアルの座学と武器庫の整備勤務を完璧にこなした。（知識 +${g}, 評価 +2）`;
+                    speaker = '先任軍曹';
+                    break;
+                }
+                case 'ENL_JR_GREET': {
+                    const ev = rand(3, 5);
+                    const ld = rand(2, 4);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
+                    state.stats.lead = clamp(state.stats.lead + ld, 0, 100);
+                    state.stamina = clamp(state.stamina - 6, 0, 100);
+                    state.mental = clamp(state.mental - 4, 0, 100);
+                    msg = `上官への丁寧な報告と雑用任務を率先して引き受け、評価を高めた。（評価 +${ev}, 統率 +${ld}）`;
+                    speaker = '小隊長 (Platoon Leader)';
+                    break;
+                }
+                case 'ENL_NCO_TACTICS': {
+                    const c = Math.max(1, rand(2, 4) - frontPenalty);
+                    const l = rand(3, 5) + staffBonus;
+                    state.stats.combat = clamp(state.stats.combat + c, 0, 100);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stamina = clamp(state.stamina - 12, 0, 100);
+                    state.mental = clamp(state.mental - 6, 0, 100);
+                    msg = `分隊の戦術訓練を指揮し、実戦さながらの連携を叩き込んだ。（統率 +${l}, 射撃 +${c}, 評価 +2）`;
+                    speaker = '中隊先任軍曹';
+                    break;
+                }
+                case 'ENL_NCO_MENTOR': {
+                    const l = rand(3, 5);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stamina = clamp(state.stamina - 10, 0, 100);
+                    state.mental = clamp(state.mental - 8, 0, 100);
+                    state.subordinates.forEach(s => {
+                        s.skill = clamp(s.skill + rand(7, 11), 0, 100);
+                        s.morale = clamp(s.morale + rand(8, 12), 0, 100);
+                    });
+                    msg = `直属の部下たちをマンツーマンで指導し、全員の練度と士気が大きく向上した！（部下練度・士気↑↑, 統率 +${l}）`;
+                    speaker = '直属の部下たち';
+                    avatarType = 'SOLDIER';
+                    break;
+                }
+                case 'ENL_NCO_ACADEMY': {
+                    const i = rand(4, 6) + staffBonus;
+                    const l = rand(2, 3);
+                    state.stats.intel = clamp(state.stats.intel + i, 0, 100);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stamina = clamp(state.stamina - 6, 0, 100);
+                    state.mental = clamp(state.mental - 12, 0, 100);
+                    msg = `下士官学校（NCOアカデミー）の専門課程を修了し、管理能力を高めた。（知識 +${i}, 統率 +${l}）`;
+                    speaker = 'アカデミー教官';
+                    break;
+                }
+                case 'ENL_NCO_CLUB': {
+                    const ev = rand(3, 6);
+                    const i = rand(2, 4);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
+                    state.stats.intel = clamp(state.stats.intel + i, 0, 100);
+                    state.stamina = clamp(state.stamina - 6, 0, 100);
+                    state.mental = clamp(state.mental - 6, 0, 100);
+                    msg = `司令部との連絡調整をスムーズにこなし、将校団からも一目置かれる存在になった。（評価 +${ev}, 知識 +${i}）`;
+                    speaker = '大隊最先任上級曹長';
+                    break;
+                }
+                case 'OFF_GAR_PLAN': {
+                    const i = rand(4, 7) + staffBonus;
+                    const l = rand(2, 4);
+                    state.stats.intel = clamp(state.stats.intel + i, 0, 100);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stamina = clamp(state.stamina - 8, 0, 100);
+                    state.mental = clamp(state.mental - 12, 0, 100);
+                    msg = `合同軍事演習の作戦計画書と兵站ラインを策定し、司令部から高い評価を得た。（知識 +${i}, 統率 +${l}）`;
+                    speaker = '旅団作戦参謀 (S-3)';
+                    break;
+                }
+                case 'OFF_GAR_MENTOR': {
+                    const l = rand(4, 6);
+                    const ev = rand(2, 4);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
+                    state.stamina = clamp(state.stamina - 10, 0, 100);
+                    state.mental = clamp(state.mental - 8, 0, 100);
+                    state.subordinates.forEach(s => {
+                        s.skill = clamp(s.skill + rand(7, 11), 0, 100);
+                        s.morale = clamp(s.morale + rand(8, 12), 0, 100);
+                    });
+                    msg = `小隊・部下たちの訓練視察と個別面談を行い、部隊の結束と練度を引き上げた。（部下練度・士気↑↑, 統率 +${l}, 評価 +${ev}）`;
+                    speaker = '直属の部下たち';
+                    avatarType = 'SOLDIER';
+                    break;
+                }
+                case 'OFF_GAR_STAFF': {
+                    const ev = rand(4, 6);
+                    const i = rand(2, 4);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
+                    state.stats.intel = clamp(state.stats.intel + i, 0, 100);
+                    state.stamina = clamp(state.stamina - 8, 0, 100);
+                    state.mental = clamp(state.mental - 10, 0, 100);
+                    msg = `幕僚会議でのプレゼンと予算折衝を成功させ、上級指揮官からの信頼を獲得した。（評価 +${ev}, 知識 +${i}）`;
+                    speaker = '師団参謀長';
+                    break;
+                }
+                case 'OFF_GAR_WARCOLLEGE': {
+                    const l = rand(4, 6) + staffBonus;
+                    const i = rand(3, 5);
+                    state.stats.lead = clamp(state.stats.lead + l, 0, 100);
+                    state.stats.intel = clamp(state.stats.intel + i, 0, 100);
+                    state.stamina = clamp(state.stamina - 8, 0, 100);
+                    state.mental = clamp(state.mental - 12, 0, 100);
+                    msg = `軍事大学（War College）の戦略研究論文を書き上げ、指揮官としての素養を深めた。（統率 +${l}, 知識 +${i}）`;
+                    speaker = '戦略研究教官';
+                    break;
+                }
+                case 'REST_REHAB': {
+                    state.stamina = clamp(state.stamina + 34, 0, 100);
+                    state.mental = clamp(state.mental + 32, 0, 100);
+                    let healMsg = '';
+                    if (hasHeavyInjury) {
+                        removeCondition('INJURED_HEAVY');
+                        addCondition('INJURED_LIGHT');
+                        healMsg = ' 集中的なリハビリにより重傷が軽傷まで回復した！';
+                    } else if (hasLightInjury) {
+                        removeCondition('INJURED_LIGHT');
+                        healMsg = ' 負傷が完全に治癒した！';
+                    }
+                    if (hasPTSD && Math.random() < 0.65) {
+                        removeCondition('PTSD');
+                        healMsg += ' カウンセリング治療によりPTSDが寛解した！';
+                    }
+                    msg = `休暇と医療ケアで心身をしっかりと休めた。（体力・メンタル 大幅回復）${healMsg}`;
+                    speaker = '軍医 (Army Medic)';
+                    avatarType = 'MEDIC';
+                    break;
+                }
+                case 'ENL_DEP_PATROL':
+                case 'OFF_DEP_INSPECT': {
+                    const isOff = actionId === 'OFF_DEP_INSPECT';
+                    const avgSubSkill = getAvgSubordinateSkill();
+                    const meritGain = rand(7, 11) + Math.floor((isOff ? state.stats.lead : state.stats.combat) / 22) + Math.floor(avgSubSkill / 30);
+                    const evalGain = rand(3, 5);
+                    state.stats.merit += meritGain;
+                    state.stats.eval = clamp(state.stats.eval + evalGain, 0, 100);
+                    if (isOff) {
+                        state.stats.lead = clamp(state.stats.lead + 2, 0, 100);
+                        state.subordinates.forEach(s => s.morale = clamp(s.morale + 6, 0, 100));
+                    } else {
+                        state.stats.combat = clamp(state.stats.combat + 2, 0, 100);
+                    }
+
+                    state.stamina = clamp(state.stamina - 20, 0, 100);
+                    state.mental = clamp(state.mental - 16, 0, 100);
+
+                    msg = isOff
+                        ? `砲火の飛び交う最前線陣地を視察し、部下と兵士たちを鼓舞した！（功績 +${meritGain}, 評価 +${evalGain}）`
+                        : `危険地帯でのパトロール任務を遂行し、敵の待ち伏せを撃退する戦果を挙げた！（功績 +${meritGain}, 評価 +${evalGain}）`;
+                    speaker = '前線作戦司令';
+                    tag = 'HIGH RISK OP';
+
+                    awardRandomCombatMedal(0.18);
+                    checkCombatRisk(1.25);
+                    if (state.isDead) return;
+                    break;
+                }
+                case 'ENL_DEP_DEFEND':
+                case 'OFF_DEP_COMMAND': {
+                    const isOff = actionId === 'OFF_DEP_COMMAND';
+                    const meritGain = isOff ? rand(6, 9) : rand(4, 7);
+                    const evalGain = rand(2, 4);
+                    state.stats.merit += meritGain;
+                    state.stats.eval = clamp(state.stats.eval + evalGain, 0, 100);
+                    if (isOff) state.stats.lead = clamp(state.stats.lead + 3, 0, 100);
+                    else state.stats.combat = clamp(state.stats.combat + 2, 0, 100);
+
+                    state.stamina = clamp(state.stamina - 15, 0, 100);
+                    state.mental = clamp(state.mental - 13, 0, 100);
+
+                    msg = isOff
+                        ? `戦術司令室で作戦指揮を執り、部隊の連携を統制して任務を成功させた！（功績 +${meritGain}, 評価 +${evalGain}）`
+                        : `前線基地（FOB）の防衛と検問任務を粘り強く遂行し、基地の安全を守り抜いた。（功績 +${meritGain}, 評価 +${evalGain}）`;
+                    speaker = '戦域司令部';
+                    tag = 'COMBAT DUTY';
+
+                    awardRandomCombatMedal(0.10);
+                    checkCombatRisk(0.70);
+                    if (state.isDead) return;
+                    break;
+                }
+                case 'ENL_DEP_SQUAD':
+                case 'OFF_DEP_LOGISTICS': {
+                    const isOff = actionId === 'OFF_DEP_LOGISTICS';
+                    const leadGain = rand(3, 5);
+                    const intelGain = rand(3, 5);
+                    const meritGain = rand(3, 6);
+                    state.stats.lead = clamp(state.stats.lead + leadGain, 0, 100);
+                    state.stats.intel = clamp(state.stats.intel + intelGain, 0, 100);
+                    state.stats.merit += meritGain;
+                    state.stamina = clamp(state.stamina - 11, 0, 100);
+                    state.mental = clamp(state.mental - 9, 0, 100);
+                    state.subordinates.forEach(s => {
+                        s.skill = clamp(s.skill + 5, 0, 100);
+                        s.morale = clamp(s.morale + 7, 0, 100);
+                    });
+
+                    msg = isOff
+                        ? `補給線の確保と情報分析を徹底し、前線部隊の活動を支えた。（知識 +${intelGain}, 統率 +${leadGain}, 功績 +${meritGain}）`
+                        : `部下たちの装備点検とメンタルケアを行い、分隊の結束を高めた。（部下練度・士気↑, 統率 +${leadGain}, 功績 +${meritGain}）`;
+                    speaker = '作戦参謀';
+                    tag = 'UNIT CARE';
+                    break;
+                }
+                case 'DEPLOY_REST': {
+                    state.stamina = clamp(state.stamina + 28, 0, 100);
+                    state.mental = clamp(state.mental + 25, 0, 100);
+                    if (hasLightInjury && Math.random() < 0.7) {
+                        removeCondition('INJURED_LIGHT');
+                        msg = '野戦病院での手当てにより軽傷が完治した。（体力・メンタル回復）';
+                    } else {
+                        msg = '後方基地で休養を取り、次の作戦に備えて体力を温存した。（体力・メンタル回復）';
+                    }
+                    speaker = '野戦軍医';
+                    avatarType = 'MEDIC';
+                    tag = 'RECOVERY';
+                    break;
+                }
+            }
+
+            // Passive Housing Regeneration & Monthly Finance Settlement
+            const house = HOUSING_TIERS[state.housingTier];
+            if (state.phase === 'GARRISON') {
+                state.stamina = clamp(state.stamina + house.stamRegen, 0, 100);
+                state.mental = clamp(state.mental + house.mentalRegen, 0, 100);
+            }
+            const finance = getMonthlyFinanceBreakdown();
+            state.savings += finance.net;
+
+            if (state.stamina <= 0 || state.mental <= 0) {
+                state.stamina = Math.max(state.stamina, 25);
+                state.mental = Math.max(state.mental, 25);
+                state.stats.eval = clamp(state.stats.eval - 5, 0, 100);
+                msg += ' 【過労警告】無理が祟って倒れ、評価が下がってしまった（評価 -5）。';
+                playSfx('alert');
+            }
+
+            // Advance 1 Month
+            state.turn++;
+            state.monthsInGrade++;
+            updateSubordinatesMonthly(state.phase === 'DEPLOYMENT');
+
+            const paySign = finance.net >= 0 ? `+$${finance.net.toLocaleString()}` : `-$${Math.abs(finance.net).toLocaleString()}`;
+            addLog(`[${getAge()}歳 ${getMonth()}月] ${msg} (収支 ${paySign})`);
+            setDialogue(speaker, avatarType, `「${msg}」`, tag);
+
+            // Check HARD Mode "Up or Out" (with 12-month warning & Special Waiver rescue)
+            if (DIFFICULTY_MODS[state.difficulty].upOrOut) {
+                const curRank = getCurrentRank();
+                const effectiveLimit = curRank.maxMonthsHard + state.bonusHardMonths;
+                if (effectiveLimit < 900) {
+                    const remMonths = effectiveLimit - state.monthsInGrade;
+                    if (remMonths === 12) {
+                        playSfx('alert');
+                        addLog(`⚠ 【昇進期限警告】現在の階級（${curRank.code}）の在任上限まで残り12ヶ月です！`, 'text-amber-400 font-bold');
+                    }
+                    if (state.monthsInGrade > effectiveLimit) {
+                        // Special Waiver Rescue: If Evaluation >= 60 or Merit >= 40, grant a +24 month retention waiver once per rank!
+                        if (!state.waiverUsedForRank && (state.stats.eval >= 60 || state.stats.merit >= 40)) {
+                            state.waiverUsedForRank = true;
+                            state.bonusHardMonths += 24;
+                            playSfx('promote');
+                            addLog(`📜 【特例在任延長（ウェイバー）】高い上官評価・戦果が認められ、昇進猶予期間が24ヶ月延長された！`, 'text-emerald-300 font-bold');
+                            setDialogue(
+                                '人事審査委員会 (Retention Board)',
+                                'OFFICER',
+                                `「本来なら規定年数超過で退役となるところだが、君の優れた評価と功績を考慮し、特例で24ヶ月間の在任延長（ウェイバー）を承認した。この間に次の昇進を勝ち取ってくれ！」`,
+                                'SPECIAL WAIVER'
+                            );
+                        } else {
+                            triggerEnding('UP_OR_OUT');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Check Mandatory Retirement
+            if (state.turn > state.maxTurns) {
+                triggerEnding('RETIRED_FULL');
+                return;
+            }
+
+            // Phase Transitions & Narrative Events
+            if (state.phase === 'DEPLOYMENT') {
+                state.deployMonthsLeft--;
+                if (state.deployMonthsLeft <= 0) {
+                    state.phase = 'GARRISON';
+                    state.nextDeployTurn = state.turn + rand(28, 38);
+                    state.stats.eval = clamp(state.stats.eval + 5, 0, 100);
+                    awardMedal('海外従軍記章 (Campaign Medal)');
+
+                    if (state.subordinates.length > 0 && state.subordinates.every(s => !s.injured)) {
+                        state.stats.eval = clamp(state.stats.eval + 4, 0, 100);
+                        addLog(`👥 直属の部下全員を無傷で帰還させ、司令部から称賛された！（評価 +4）`, 'text-emerald-300 font-bold');
+                    }
+
+                    playSfx('promote');
+                    addLog(`✈ 海外派遣任務を完遂し、本国駐屯地へ無事帰還した！（評価 +5）`, 'text-emerald-400 font-bold');
+                    addHighlight(`${getAge()}歳: 第${state.deployCount}次 海外派遣から無事帰還`);
+                    setDialogue(
+                        '大隊長 (Battalion CO)',
+                        'OFFICER',
+                        `「おかえり、${getCurrentRank().name}！危険手当も振り込まれているはずだ。駐屯地で体を休め、次の昇進審査に備えてくれ。」`,
+                        'WELCOME HOME'
+                    );
+                } else if (Math.random() < 0.35) {
+                    triggerDeploymentEvent();
+                }
+            } else if (state.turn >= state.nextDeployTurn && state.turn <= state.maxTurns - 10) {
+                state.phase = 'DEPLOYMENT';
+                state.deployMonthsLeft = rand(9, 12);
+                state.deployCount++;
+                playSfx('deploy');
+                addLog(`🚨 【海外派遣命令】紛争地域への派遣（期間：${state.deployMonthsLeft}ヶ月／危険手当支給）が発令された！`, 'text-red-400 font-bold');
+                addHighlight(`${getAge()}歳: 第${state.deployCount}次 海外戦地派遣へ出動`);
+                setDialogue(
+                    '作戦司令部 (HQ Command)',
+                    'OFFICER',
+                    `「緊急命令！君の部隊に${state.deployMonthsLeft}ヶ月間の海外派遣が発令された。派遣中は危険手当が加算される。部下と共に必ず生きて帰還せよ！」`,
+                    'DEPLOYMENT ORDER'
+                );
+            } else {
+                if (Math.random() < 0.18) {
+                    triggerGarrisonEvent();
+                }
+            }
+
+            renderAll();
+        }
+
+        // ==================== COMBAT RISK, MEDALS & SUBORDINATE CASUALTIES ====================
+        function getAvgSubordinateSkill() {
+            if (state.subordinates.length === 0) return 50;
+            const sum = state.subordinates.reduce((acc, s) => acc + s.skill, 0);
+            return Math.round(sum / state.subordinates.length);
+        }
+
+        function awardRandomCombatMedal(prob) {
+            if (Math.random() >= prob) return;
+            const pool = [
+                'ブロンズスター勲章 (Bronze Star)',
+                '陸軍称揚勲章 (Army Commendation)',
+                'シルバー・スター勲章 (Silver Star)'
+            ];
+            const chosen = pool[Math.floor(Math.random() * pool.length)];
+            awardMedal(chosen);
+        }
+
+        function awardMedal(medalName) {
+            if (!state.medals.includes(medalName)) {
+                state.medals.push(medalName);
+                addLog(`🏅 【勲章授与】「${medalName}」を受章した！`, 'text-amber-300 font-bold');
+                addHighlight(`${getAge()}歳: ${medalName}を受章`);
+            } else {
+                const clusterName = `${medalName} (2nd)`;
+                if (!state.medals.includes(clusterName)) {
+                    state.medals.push(clusterName);
+                    addLog(`🏅 【勲章授与】二度目の「${medalName}」を受章した！`, 'text-amber-300 font-bold');
+                }
+            }
+        }
+
+        function checkCombatRisk(riskMult) {
+            const diff = DIFFICULTY_MODS[state.difficulty];
+            const injuryProb = 0.09 * diff.injuryMult * riskMult;
+            const ptsdProb = 0.09 * diff.injuryMult * riskMult;
+
+            if (state.subordinates.length > 0 && Math.random() < 0.12 * riskMult) {
+                const vulnerable = state.subordinates.find(s => !s.injured && (s.skill < 45 || s.morale < 45));
+                if (vulnerable) {
+                    vulnerable.injured = true;
+                    vulnerable.morale = clamp(vulnerable.morale - 15, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval - 2, 0, 100);
+                    addLog(`⚠ 【部下負傷】作戦中に練度不足の部下 ${vulnerable.rank} ${vulnerable.name} が負傷した！（評価 -2）`, 'text-rose-400');
+                }
+            }
+
+            if (Math.random() < injuryProb) {
+                if (diff.canDie && state.stamina < 25 && Math.random() < 0.22) {
+                    state.isDead = true;
+                    triggerEnding('KIA');
+                    return;
+                }
+
+                playSfx('alert');
+                awardMedal('パープルハート章 (Purple Heart)');
+
+                if (!state.conditions.includes('INJURED_LIGHT') && !state.conditions.includes('INJURED_HEAVY')) {
+                    addCondition('INJURED_LIGHT');
+                    addLog('⚠ 戦闘中の被弾により軽傷を負った（パープルハート章授与）。', 'text-amber-300');
+                } else if (state.conditions.includes('INJURED_LIGHT')) {
+                    removeCondition('INJURED_LIGHT');
+                    addCondition('INJURED_HEAVY');
+                    addLog('🚨 負傷を押して前線に立ち続けた結果、重傷を負ってしまった！', 'text-red-400 font-bold');
+                    addHighlight(`${getAge()}歳: 戦地で重傷を負うも生還`);
+
+                    if (!state.conditions.includes('REASSIGNED_STAFF')) {
+                        addCondition('REASSIGNED_STAFF');
+                        state.stats.intel = clamp(state.stats.intel + 8, 0, 100);
+                        state.stats.lead = clamp(state.stats.lead + 8, 0, 100);
+                        setTimeout(() => {
+                            setDialogue(
+                                '軍医＆人事担当将校',
+                                'MEDIC',
+                                '「一命を取り留めて本当によかった。激しい前線任務は体に障るため、君には『教官・後方支援適性』が付与された。豊富な実戦経験を活かし、知識と統率力で部隊を導こう！」',
+                                'CAREER PIVOT'
+                            );
+                        }, 250);
+                    }
+                }
+            } else if (Math.random() < ptsdProb && !state.conditions.includes('PTSD')) {
+                addCondition('PTSD');
+                addLog('⚠ 過酷な戦場体験によりPTSDを発症した。休養や旅行で緩和・治療可能。', 'text-purple-300');
+            }
+        }
+
+        // ==================== INTERACTIVE EVENTS ====================
+        function triggerGarrisonEvent() {
+            const events = [
+                {
+                    speaker: '中隊長 (Company CO)',
+                    avatar: 'OFFICER',
+                    tag: 'INSPECTION',
+                    text: '「来週、師団司令部による抜き打ちの部隊査閲が行われる。準備責任者を任せたいのだが、引き受けてくれるか？」',
+                    choices: [
+                        {
+                            label: '責任者を引き受ける (メンタル-10 / 成功で評価+6, 統率+4)',
+                            effect: () => {
+                                state.mental = clamp(state.mental - 10, 0, 100);
+                                if (state.stats.intel + state.stats.lead >= 50 || Math.random() < 0.65) {
+                                    state.stats.eval = clamp(state.stats.eval + 6, 0, 100);
+                                    state.stats.lead = clamp(state.stats.lead + 4, 0, 100);
+                                    return '完璧な準備で師団長から絶賛された！（評価 +6, 統率 +4）';
+                                } else {
+                                    state.stats.eval = clamp(state.stats.eval - 2, 0, 100);
+                                    return '細かな不備を指摘されたが、責任感は評価された。（評価 -2）';
+                                }
+                            }
+                        },
+                        {
+                            label: '現場の整備サポートに回る (堅実・評価+2)',
+                            effect: () => {
+                                state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                                return '裏方としてチームを支え、無事に査閲を乗り切った。（評価 +2）';
+                            }
+                        }
+                    ]
+                },
+                {
+                    speaker: '特殊訓練 選抜官',
+                    avatar: 'INSTRUCTOR',
+                    tag: 'RANGER SCHOOL',
+                    text: '「過酷な『レンジャー課程（Ranger School）』の選抜枠に空きが出た。挑戦してみるか？」',
+                    choices: [
+                        {
+                            label: 'レンジャー課程に挑戦！ (体力HP-20 / 成功で射撃+6, 評価+6, 勲章)',
+                            effect: () => {
+                                state.stamina = clamp(state.stamina - 20, 0, 100);
+                                if (state.stats.phys >= 42) {
+                                    state.stats.combat = clamp(state.stats.combat + 6, 0, 100);
+                                    state.stats.eval = clamp(state.stats.eval + 6, 0, 100);
+                                    awardMedal('レンジャー修了章 (Ranger Tab)');
+                                    return '地獄の訓練を耐え抜き、栄誉あるレンジャータブを獲得した！（射撃 +6, 評価 +6）';
+                                } else {
+                                    state.stats.phys = clamp(state.stats.phys + 4, 0, 100);
+                                    return '体力不足で惜しくも脱落したが、限界に挑んだ経験が糧になった。（体力 +4）';
+                                }
+                            }
+                        },
+                        {
+                            label: '今回は見送る (現状維持)',
+                            effect: () => '無理をせず通常の駐屯地勤務に集中することにした。'
+                        }
+                    ]
+                }
+            ];
+
+            showChoiceModal(events[Math.floor(Math.random() * events.length)]);
+        }
+
+        function triggerDeploymentEvent() {
+            const events = [
+                {
+                    speaker: '前線偵察班',
+                    avatar: 'SOLDIER',
+                    tag: 'AMBUSH ALERT',
+                    text: '「車列の前方に仕掛け爆弾（IED）の疑いがある不審物と、武装勢力の伏兵を確認！どう対処しますか？」',
+                    choices: [
+                        {
+                            label: '迂回ルートを展開し制圧射撃を指揮する (射撃・統率判定 / 功績+12)',
+                            effect: () => {
+                                if (state.stats.combat + state.stats.lead >= 75 || Math.random() < 0.6) {
+                                    state.stats.merit += 12;
+                                    state.stats.eval = clamp(state.stats.eval + 5, 0, 100);
+                                    awardRandomCombatMedal(0.35);
+                                    return '見事な戦術判断で待ち伏せを無力化し、車列を無傷で通過させた！（功績 +12, 評価 +5）';
+                                } else {
+                                    state.stamina = clamp(state.stamina - 18, 0, 100);
+                                    state.mental = clamp(state.mental - 15, 0, 100);
+                                    return '激しい銃撃戦となったが、辛うじて敵を退けた。（体力-18, メンタル-15）';
+                                }
+                            }
+                        },
+                        {
+                            label: '工兵隊の到着を待って安全確保を優先 (堅実・功績+5, 知識+3)',
+                            effect: () => {
+                                state.stats.merit += 5;
+                                state.stats.intel = clamp(state.stats.intel + 3, 0, 100);
+                                return '慎重な判断で味方の被害をゼロに抑え、爆発物を処理した。（功績 +5, 知識 +3）';
+                            }
+                        }
+                    ]
+                },
+                {
+                    speaker: '現地連絡将校',
+                    avatar: 'OFFICER',
+                    tag: 'CIVIL AFFAIRS',
+                    text: '「地元の村長から医療物資の支援を求められている。限られた物資を分け与えるべきか？」',
+                    choices: [
+                        {
+                            label: '医療支援を行い住民と信頼を築く (知識・統率判定 / 評価+6, 功績+8)',
+                            effect: () => {
+                                state.stats.eval = clamp(state.stats.eval + 6, 0, 100);
+                                state.stats.merit += 8;
+                                state.mental = clamp(state.mental + 8, 0, 100);
+                                return '住民から感謝され、敵の潜伏場所に関する貴重な情報も得られた！（功績 +8, 評価 +6）';
+                            }
+                        },
+                        {
+                            label: '部隊の予備物資を優先して温存する (体力+10)',
+                            effect: () => {
+                                state.stamina = clamp(state.stamina + 10, 0, 100);
+                                return '部隊の継戦能力を最優先し、万全の態勢を維持した。（体力 +10）';
+                            }
+                        }
+                    ]
+                }
+            ];
+
+            showChoiceModal(events[Math.floor(Math.random() * events.length)]);
+        }
+
+        function showChoiceModal(ev) {
+            state.awaitingChoice = true;
+            setDialogue(ev.speaker, ev.avatar, ev.text, ev.tag);
+
+            const container = document.getElementById('eventChoicesContainer');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            ev.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-200 text-xs font-bold text-left transition';
+                btn.textContent = `▶ ${choice.label}`;
+                btn.onclick = () => {
+                    playSfx('click');
+                    const resultText = choice.effect();
+                    state.awaitingChoice = false;
+                    container.classList.add('hidden');
+                    addLog(`[イベント] ${resultText}`, 'text-sky-300');
+                    setDialogue(ev.speaker, ev.avatar, `「${resultText}」`, 'EVENT RESULT');
+                    renderAll();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // ==================== PROMOTION BOARD & OCS BRANCHING ====================
+        function checkPromotionRequirements() {
+            const trackList = RANKS[state.track];
+            if (state.rankIndex >= trackList.length - 1) return { canPromote: false, isMax: true, items: [] };
+
+            const nextRank = trackList[state.rankIndex + 1];
+            const req = nextRank.req;
+            const scale = DIFFICULTY_MODS[state.difficulty].reqScale;
+
+            const items = [];
+            let allMet = true;
+
+            const reqMonths = Math.max(3, Math.floor(req.months * (state.difficulty === 'EASY' ? 0.78 : 1)));
+            const metT = (state.turn - 1) >= reqMonths;
+            items.push({ label: `総勤続期間: ${reqMonths}ヶ月以上 (現在 ${state.turn - 1}ヶ月)`, met: metT });
+            if (!metT) allMet = false;
+
+            const statMap = [
+                { key: 'phys', name: '体力' },
+                { key: 'combat', name: '射撃' },
+                { key: 'intel', name: '知識' },
+                { key: 'lead', name: '統率' },
+                { key: 'eval', name: '上官評価' },
+                { key: 'merit', name: '功績Pt' }
+            ];
+
+            statMap.forEach(s => {
+                if (req[s.key] !== undefined) {
+                    const targetVal = Math.min(98, Math.round(req[s.key] * scale));
+                    const curVal = state.stats[s.key];
+                    const met = curVal >= targetVal;
+                    items.push({ label: `${s.name}: ${targetVal}以上 (現在 ${curVal})`, met });
+                    if (!met) allMet = false;
+                }
+            });
+
+            if (req.deploy !== undefined) {
+                const metD = state.deployCount >= req.deploy;
+                items.push({ label: `海外派遣経験: ${req.deploy}回以上 (現在 ${state.deployCount}回)`, met: metD });
+                if (!metD) allMet = false;
+            }
+
+            const noHeavy = !state.conditions.includes('INJURED_HEAVY');
+            items.push({ label: '健康状態: 重傷でないこと', met: noHeavy });
+            if (!noHeavy) allMet = false;
+
+            return { canPromote: allMet, isMax: false, nextRank, items };
+        }
+
+        function attemptPromotion() {
+            if (state.awaitingChoice) return;
+            const check = checkPromotionRequirements();
+            if (!check.canPromote) return;
+
+            playSfx('promote');
+            state.rankIndex++;
+            state.monthsInGrade = 0;
+            state.bonusHardMonths = 0;
+            state.waiverUsedForRank = false;
+            const newRank = getCurrentRank();
+
+            if ((state.track === 'ENLISTED' && state.rankIndex >= 6) || (state.track === 'OFFICER' && state.rankIndex >= 3)) {
+                state.maxTurns = Math.max(state.maxTurns, 312);
+            }
+            if ((state.track === 'ENLISTED' && state.rankIndex >= 8) || (state.track === 'OFFICER' && state.rankIndex >= 5)) {
+                state.maxTurns = 360;
+            }
+
+            addLog(`🎖 【昇進決定】${newRank.code} ${newRank.name} へ昇進！（基本月給 $${newRank.pay.toLocaleString()} にアップ）`, 'text-amber-400 font-black');
+            addHighlight(`${getAge()}歳 (${getServiceYear()}年目): ${newRank.code} ${newRank.name} に昇進`);
+
+            ensureSubordinatesAssigned(true);
+
+            setDialogue(
+                '昇進審査委員会 (Promotion Board)',
+                'OFFICER',
+                `「おめでとう、${newRank.name}！昇進が承認され、給与等級も引き上げられた。新しい階級章に相応しい責任とリーダーシップを発揮してくれ！」`,
+                'PROMOTION APPROVED'
+            );
+
+            renderAll();
+        }
+
+        function canApplyOCS() {
+            if (!DIFFICULTY_MODS[state.difficulty].allowOCS) return false;
+            return state.track === 'ENLISTED' &&
+                   (state.rankIndex === 3 || state.rankIndex === 4) &&
+                   state.stats.intel >= 45 &&
+                   state.stats.lead >= 45 &&
+                   state.stats.eval >= 55 &&
+                   !state.conditions.includes('INJURED_HEAVY');
+        }
+
+        function attemptOCS() {
+            if (!canApplyOCS() || state.awaitingChoice) return;
+            playSfx('promote');
+
+            state.track = 'OFFICER';
+            state.rankIndex = 0;
+            state.monthsInGrade = 0;
+            state.bonusHardMonths = 0;
+            state.waiverUsedForRank = false;
+            state.stats.lead = clamp(state.stats.lead + 8, 0, 100);
+            state.stats.intel = clamp(state.stats.intel + 6, 0, 100);
+            state.maxTurns = Math.max(state.maxTurns, 312);
+
+            const newRank = getCurrentRank();
+            addLog(`🎓 【将校ルート転向】OCS（士官候補生学校）を卒業し、将校（${newRank.code} ${newRank.name}／月給 $${newRank.pay.toLocaleString()}）へ任官した！`, 'text-indigo-400 font-black');
+            addHighlight(`${getAge()}歳 (${getServiceYear()}年目): OCSを経て将校（${newRank.code} 少尉）へ転向`);
+
+            ensureSubordinatesAssigned(true);
+
+            setDialogue(
+                'OCS 士官候補生学校 校長',
+                'OFFICER',
+                `「現場を知る叩き上げ将校の誕生だ、${newRank.name}！これからは指揮官として部下を率い、作戦立案と部隊統率を担うことになる！」`,
+                'COMMISSIONED OFFICER'
+            );
+
+            renderAll();
+        }
+
+        // ==================== VOLUNTARY RETIREMENT ====================
+        function confirmVoluntaryRetire() {
+            document.getElementById('modalTitle').textContent = '満期依願退職の確認';
+            document.getElementById('modalBody').textContent = `勤続20年を超えているため、現在の階級（${getCurrentRank().code} ${getCurrentRank().name}）で名誉ある満期退役（恩給受給）を選択できます。退役して軍歴証明書（DD Form 214）を作成しますか？`;
+            const btn = document.getElementById('modalConfirmBtn');
+            btn.textContent = '名誉退役する';
+            btn.className = 'px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-xs font-black text-slate-950';
+            btn.onclick = () => {
+                closeModal();
+                triggerEnding('RETIRED_FULL');
+            };
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        // ==================== DD FORM 214 ENDING GENERATOR ====================
+        function triggerEnding(reason) {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('endingScreen').classList.remove('hidden');
+
+            const finalRank = getCurrentRank();
+            const badgeEl = document.getElementById('endingBadge');
+            const titleEl = document.getElementById('endingTitle');
+            const subEl = document.getElementById('endingSubtitle');
+            const careerTitleEl = document.getElementById('endCareerTitle');
+            const gradeEl = document.getElementById('endGrade');
+            const epiEl = document.getElementById('endEpilogueText');
+
+            const totalYears = Math.floor((state.turn - 1) / 12);
+            const remMonths = (state.turn - 1) % 12;
+
+            document.getElementById('endFinalRank').textContent = `${finalRank.code} ${finalRank.name}`;
+            document.getElementById('endNameBranch').textContent = `${state.name} / ${state.branchName} (${state.difficulty})`;
+            document.getElementById('endServiceYears').textContent = `${totalYears}年 ${remMonths}ヶ月`;
+            document.getElementById('endFinance').textContent = `$${state.savings.toLocaleString()} / ${HOUSING_TIERS[state.housingTier].name.split(' ')[0]}`;
+            document.getElementById('endDeployCount').textContent = `${state.deployCount}回`;
+            document.getElementById('endSubordinates').textContent = `${state.mentoredCount}名育成`;
+            document.getElementById('endMedalCount').textContent = `${state.medals.length}個`;
+
+            const score = (state.track === 'OFFICER' ? 30 : 0) +
+                          (state.rankIndex * 10) +
+                          (state.medals.length * 6) +
+                          (state.mentoredCount * 5) +
+                          (state.housingTier * 6) +
+                          Math.floor((state.stats.lead + state.stats.intel + state.stats.eval + state.stats.combat) / 8);
+
+            let grade = 'D';
+            if (score >= 125) grade = 'S';
+            else if (score >= 96) grade = 'A';
+            else if (score >= 72) grade = 'B';
+            else if (score >= 50) grade = 'C';
+
+            if (reason === 'KIA') {
+                playSfx('alert');
+                badgeEl.textContent = 'KILLED IN ACTION // 戦死';
+                badgeEl.className = 'inline-block px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono-tech mb-2';
+                titleEl.textContent = '戦場に散った英雄 (HONOR FALLEN)';
+                subEl.textContent = `${getAge()}歳、戦地派遣任務中に仲間を守り抜いて壮絶な戦死を遂げた。`;
+                careerTitleEl.textContent = '「戦場に刻まれた不滅の魂」';
+                gradeEl.textContent = 'HERO';
+                gradeEl.className = 'text-3xl font-black text-red-400 font-mono-tech';
+                epiEl.textContent = `${state.name}の名は所属部隊の慰霊碑に深く刻まれ、その勇敢な献身は後輩兵士たちの永遠の誇りとなった。`;
+            } else if (reason === 'UP_OR_OUT') {
+                playSfx('alert');
+                badgeEl.textContent = 'UP OR OUT // 昇進停滞による強制退役';
+                badgeEl.className = 'inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono-tech mb-2';
+                titleEl.textContent = '任期満了・強制退役 (SEPARATION)';
+                subEl.textContent = `HARDルールの規定期間内に次の階級へ昇進できず、${getAge()}歳で軍を去ることとなった。`;
+                careerTitleEl.textContent = '「厳格なる規律を生きた実務家」';
+                gradeEl.textContent = `RANK ${grade}`;
+                epiEl.textContent = `定年満期には届かなかったものの、軍隊で培った規律と実務経験は民間社会でも高く評価され、危機管理・物流分野のリーダーとして新たな人生を歩み始めた。`;
+            } else {
+                playSfx('promote');
+                badgeEl.textContent = 'HONORABLE RETIREMENT // 名誉除隊 (DD FORM 214)';
+                badgeEl.className = 'inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono-tech mb-2';
+                titleEl.textContent = '名誉ある定年退役 (DD FORM 214)';
+                subEl.textContent = `18歳の入隊から${totalYears}年間、数々の試練を乗り越えて${getAge()}歳で名誉退役を迎えた！`;
+                gradeEl.textContent = `RANK ${grade}`;
+
+                if (state.track === 'OFFICER' && state.rankIndex >= 5) {
+                    careerTitleEl.textContent = '「伝説の叩き上げ将軍」';
+                    epiEl.textContent = `上級将校（${finalRank.name}）として大部隊を率いた実績を買われ、退役後は国防総省の政策顧問および安全保障アナリストとして活躍。国家の中枢を支える人生を送った。`;
+                } else if (state.track === 'OFFICER') {
+                    careerTitleEl.textContent = '「現場を知る叩き上げ将校」';
+                    epiEl.textContent = `二等兵から身を起こし、OCSを経て将校として多くの部下を導いたキャリアを持つ。貯蓄$${state.savings.toLocaleString()}と恩給を元手に、穏やかで誇り高い第二の人生を謳歌している。`;
+                } else if (state.track === 'ENLISTED' && state.rankIndex >= 8) {
+                    careerTitleEl.textContent = '「現場に愛された伝説の最先任上級曹長」';
+                    epiEl.textContent = `下士官の頂点（${finalRank.name}）として全兵士から畏敬の念を集めた伝説の軍人。退役後は下士官学校の特別顧問に招かれ、次世代のリーダー育成に情熱を注いでいる。`;
+                } else if (state.conditions.includes('REASSIGNED_STAFF')) {
+                    careerTitleEl.textContent = '「不屈の教官・後方支援の要」';
+                    epiEl.textContent = `戦地での重傷を乗り越えて指導・後方支援のスペシャリストへと転身した経験を活かし、退役後は退役軍人支援財団の代表として多くの傷痍軍人の社会復帰を支えている。`;
+                } else {
+                    careerTitleEl.textContent = '「堅実なる職業軍人」';
+                    epiEl.textContent = `${totalYears}年間の勤続を無事に終え、満額の軍人恩給と$${state.savings.toLocaleString()}の貯蓄とともに${HOUSING_TIERS[state.housingTier].name.split(' ')[0]}で穏やかな余生を楽しんでいる。`;
+                }
+            }
+
+            const endMedalsEl = document.getElementById('endMedalsList');
+            if (state.medals.length === 0) {
+                endMedalsEl.innerHTML = '<span class="text-slate-500">特記すべき受章勲章なし（精勤章のみ）</span>';
+            } else {
+                endMedalsEl.innerHTML = state.medals.map(m => `<span class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 font-semibold">🏅 ${m}</span>`).join('');
+            }
+
+            document.getElementById('endTimeline').innerHTML = state.highlights.map(h => `<div>• ${h}</div>`).join('');
+        }
+
+        // ==================== UI RENDERING ====================
+        function renderAll() {
+            const rank = getCurrentRank();
+            const isDeploy = state.phase === 'DEPLOYMENT';
+            const finance = getMonthlyFinanceBreakdown();
+            const house = HOUSING_TIERS[state.housingTier];
+
+            document.getElementById('uiRankCode').textContent = rank.code;
+            document.getElementById('uiRankName').textContent = rank.name;
+            document.getElementById('uiName').textContent = state.name;
+            document.getElementById('uiBranch').textContent = state.branchName;
+
+            const trackBadge = document.getElementById('uiTrackBadge');
+            if (state.track === 'OFFICER') {
+                trackBadge.textContent = '⭐ 将校ルート (Officer)';
+                trackBadge.className = 'px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-600/70 font-bold';
+            } else {
+                trackBadge.textContent = '🎖️ 兵卒・下士官ルート (Enlisted)';
+                trackBadge.className = 'px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/60';
+            }
+
+            const diffBadge = document.getElementById('uiDifficultyBadge');
+            diffBadge.textContent = DIFFICULTY_MODS[state.difficulty].label;
+            diffBadge.className = `${DIFFICULTY_MODS[state.difficulty].color} font-bold`;
+
+            document.getElementById('uiAge').textContent = getAge();
+            document.getElementById('uiYear').textContent = getServiceYear();
+            document.getElementById('uiMonth').textContent = getMonth();
+            document.getElementById('uiRetireAge').textContent = 18 + Math.floor(state.maxTurns / 12);
+
+            document.getElementById('uiSavings').textContent = state.savings.toLocaleString();
+            const netEl = document.getElementById('uiNetIncome');
+            netEl.textContent = finance.net >= 0 ? `(+$${finance.net.toLocaleString()}/月)` : `(-$${Math.abs(finance.net).toLocaleString()}/月)`;
+            netEl.className = finance.net >= 0 ? 'text-[11px] text-emerald-300/80 font-normal' : 'text-[11px] text-rose-400 font-bold';
+
+            document.getElementById('rankInsigniaBox').innerHTML = getRankSVG(rank.code);
+
+            const topBar = document.getElementById('topStatusBar');
+            const phaseBadge = document.getElementById('uiPhaseBadge');
+            const stage = document.getElementById('visualStage');
+
+            if (isDeploy) {
+                topBar.classList.add('border-red-500/70', 'deployment-glow');
+                topBar.classList.remove('border-slate-700/90');
+                phaseBadge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span> 派遣(残${state.deployMonthsLeft}ヶ月)`;
+                phaseBadge.className = 'text-xs sm:text-sm font-black text-red-400 flex items-center gap-1.5';
+
+                stage.classList.add('border-red-500/60', 'bg-red-950/25');
+                document.getElementById('stageLocationTitle').textContent = `第${state.deployCount}次 海外派遣地域 - 前線作戦基地 (FOB)`;
+                document.getElementById('stageLocationTitle').className = 'text-xs font-extrabold text-red-400 tracking-wide';
+                document.getElementById('stageLocationSub').textContent = `危険手当 +$${finance.hazardPay.toLocaleString()}/月 支給中。部下と共に生還し功績を積み上げろ。`;
+                document.getElementById('commandDeckTitle').textContent = '🔥 戦地派遣コマンド (DEPLOYMENT OPERATIONS)';
+                document.getElementById('commandDeckTitle').className = 'text-xs font-black text-red-400 uppercase tracking-wider';
+            } else {
+                topBar.classList.remove('border-red-500/70', 'deployment-glow');
+                topBar.classList.add('border-slate-700/90');
+                phaseBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 駐屯地`;
+                phaseBadge.className = 'text-xs sm:text-sm font-black text-emerald-400 flex items-center gap-1.5';
+
+                stage.classList.remove('border-red-500/60', 'bg-red-950/25');
+                document.getElementById('stageLocationTitle').textContent = 'フォート・リバティ駐屯地 - 兵舎・司令部エリア';
+                document.getElementById('stageLocationTitle').className = 'text-xs font-extrabold text-amber-400 tracking-wide';
+                const mosToDeploy = Math.max(1, state.nextDeployTurn - state.turn);
+                document.getElementById('stageLocationSub').textContent = state.nextDeployTurn <= state.maxTurns - 10
+                    ? `次回海外派遣予定: 約${mosToDeploy}ヶ月後`
+                    : '定年退役まで残りわずか（本国駐屯地勤務）';
+                document.getElementById('commandDeckTitle').textContent = '⚡ 駐屯地行動コマンド (1ターン = 1ヶ月経過 / 毎月給与支給)';
+                document.getElementById('commandDeckTitle').className = 'text-xs font-black text-slate-200 uppercase tracking-wider';
+            }
+
+            const volBtn = document.getElementById('btnVoluntaryRetire');
+            if (!isDeploy && state.turn > 240 && !state.awaitingChoice) {
+                volBtn.classList.remove('hidden');
+            } else {
+                volBtn.classList.add('hidden');
+            }
+
+            document.getElementById('stageBgIllustration').innerHTML = getStageBgSVG(isDeploy);
+
+            document.getElementById('barStamina').style.width = `${state.stamina}%`;
+            document.getElementById('valStamina').textContent = `${state.stamina}/100`;
+            document.getElementById('barMental').style.width = `${state.mental}%`;
+            document.getElementById('valMental').textContent = `${state.mental}/100`;
+            document.getElementById('uiHousingBadge').textContent = `${house.icon} ${house.name.split(' ')[0]}`;
+            document.getElementById('valMeritTop').textContent = state.stats.merit;
+            document.getElementById('valMedals').textContent = state.medals.length;
+            document.getElementById('deployCountLabel').textContent = `派遣: ${state.deployCount}回`;
+
+            const condEl = document.getElementById('uiConditions');
+            if (state.conditions.length === 0) {
+                condEl.innerHTML = `<span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs">健康良好</span>`;
+            } else {
+                const labels = {
+                    INJURED_LIGHT: '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 text-[11px]">🩹 軽傷</span>',
+                    INJURED_HEAVY: '<span class="px-1.5 py-0.5 rounded bg-red-500/30 border border-red-500/60 text-red-300 text-[11px] font-bold">🏥 重傷</span>',
+                    PTSD: '<span class="px-1.5 py-0.5 rounded bg-purple-500/25 border border-purple-500/50 text-purple-300 text-[11px]">🧠 PTSD</span>',
+                    REASSIGNED_STAFF: '<span class="px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-500/50 text-sky-300 text-[11px]">📋 教官適性</span>'
+                };
+                condEl.innerHTML = state.conditions.map(c => labels[c] || '').join('');
+            }
+
+            const s = state.stats;
+            document.getElementById('statPhys').textContent = s.phys;
+            document.getElementById('barPhys').style.width = `${s.phys}%`;
+            document.getElementById('statCombat').textContent = s.combat;
+            document.getElementById('barCombat').style.width = `${s.combat}%`;
+            document.getElementById('statIntel').textContent = s.intel;
+            document.getElementById('barIntel').style.width = `${s.intel}%`;
+            document.getElementById('statLead').textContent = s.lead;
+            document.getElementById('barLead').style.width = `${s.lead}%`;
+            document.getElementById('statEval').textContent = s.eval;
+            document.getElementById('barEval').style.width = `${s.eval}%`;
+
+            // Promotion Board UI (Relaxed HARD Mode countdown)
+            let tigText = `在任: ${state.monthsInGrade}ヶ月`;
+            const warnEl = document.getElementById('upOrOutWarning');
+            const effectiveLimit = rank.maxMonthsHard + state.bonusHardMonths;
+            if (DIFFICULTY_MODS[state.difficulty].upOrOut && effectiveLimit < 900) {
+                const rem = effectiveLimit - state.monthsInGrade;
+                tigText += ` (期限残${rem}ヶ月)`;
+                if (rem <= 12) {
+                    warnEl.classList.remove('hidden');
+                    warnEl.textContent = `⚠ Up or Out警告: 残り${rem}ヶ月以内に昇進せよ！`;
+                } else {
+                    warnEl.classList.add('hidden');
+                }
+            } else {
+                warnEl.classList.add('hidden');
+            }
+            document.getElementById('timeInGradeLabel').textContent = tigText;
+
+            const promoCheck = checkPromotionRequirements();
+            const nextTitleEl = document.getElementById('nextRankTitle');
+            const pillEl = document.getElementById('promotionStatusPill');
+            const listEl = document.getElementById('promotionChecklist');
+            const btnPromo = document.getElementById('btnPromote');
+
+            if (promoCheck.isMax) {
+                nextTitleEl.textContent = '最高階級到達 (MAX RANK)';
+                pillEl.textContent = '最高位達成';
+                pillEl.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300';
+                listEl.innerHTML = '<div class="text-slate-400">このルートの最高階級に到達しました。定年まで部隊を導いてください。</div>';
+                btnPromo.disabled = true;
+                btnPromo.className = 'w-full py-2.5 px-3 rounded-lg font-extrabold text-xs tracking-wider bg-slate-800 text-slate-500 cursor-not-allowed';
+            } else {
+                nextTitleEl.textContent = `${promoCheck.nextRank.code} ${promoCheck.nextRank.name}`;
+                listEl.innerHTML = promoCheck.items.map(item => `
+                    <div class="flex items-center gap-2 ${item.met ? 'text-emerald-400 font-semibold' : 'text-slate-400'}">
+                        <span class="font-mono-tech font-bold">${item.met ? '✓' : '☐'}</span>
+                        <span>${item.label}</span>
+                    </div>
+                `).join('');
+
+                if (promoCheck.canPromote && !state.awaitingChoice) {
+                    pillEl.textContent = '審査受験可能！';
+                    pillEl.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 animate-pulse';
+                    btnPromo.disabled = false;
+                    btnPromo.className = 'w-full py-2.5 px-3 rounded-lg font-black text-xs tracking-wider transition bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/25 cursor-pointer';
+                } else {
+                    pillEl.textContent = '条件未達成';
+                    pillEl.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-slate-400';
+                    btnPromo.disabled = true;
+                    btnPromo.className = 'w-full py-2.5 px-3 rounded-lg font-extrabold text-xs tracking-wider bg-slate-800 text-slate-500 cursor-not-allowed';
+                }
+            }
+
+            const btnOCS = document.getElementById('btnOCS');
+            if (canApplyOCS() && !state.awaitingChoice && !isDeploy) {
+                btnOCS.classList.remove('hidden');
+            } else {
+                btnOCS.classList.add('hidden');
+            }
+
+            const medalBadgesEl = document.getElementById('medalListBadges');
+            if (state.medals.length === 0) {
+                medalBadgesEl.innerHTML = '<span class="text-[11px] text-slate-500">受章歴なし</span>';
+            } else {
+                medalBadgesEl.innerHTML = state.medals.map(m => `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px]">🏅 ${m.split(' ')[0]}</span>`).join('');
+            }
+            document.getElementById('miniTimeline').innerHTML = state.highlights.slice().reverse().map(h => `<div>• ${h}</div>`).join('');
+
+            renderSubordinatesTab();
+            renderLifestyleShopTab(finance);
+
+            const cmds = getAvailableCommands();
+            const gridEl = document.getElementById('dynamicCommandGrid');
+            gridEl.className = `grid grid-cols-2 sm:grid-cols-${cmds.length} gap-2.5`;
+            gridEl.innerHTML = cmds.map(c => `
+                <button onclick="executeTurn('${c.id}')" ${state.awaitingChoice ? 'disabled' : ''}
+                    class="cmd-btn p-3 rounded-xl border text-left flex flex-col justify-between ${c.style} ${state.awaitingChoice ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <div>
+                        <div class="text-xs sm:text-sm font-extrabold mb-1">${c.title}</div>
+                        <p class="text-[11px] text-slate-300/90 leading-snug">${c.desc}</p>
+                    </div>
+                    <div class="mt-2 pt-1.5 border-t border-slate-700/60 text-[10px] font-mono-tech text-slate-300">
+                        ${c.cost}
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function renderSubordinatesTab() {
+            document.getElementById('mentoredCountBadge').textContent = `育成修了: ${state.mentoredCount}名`;
+            const container = document.getElementById('subordinatesContainer');
+
+            if (!hasSubordinatePrivilege()) {
+                container.innerHTML = `
+                    <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-4 text-center space-y-2">
+                        <div class="text-2xl">🔒</div>
+                        <div class="text-xs font-extrabold text-slate-300">未解禁（三等軍曹 E-5 または 少尉 O-1 で解禁）</div>
+                        <p class="text-[11px] text-slate-400">現在は一兵卒・若手階級のため直属の部下はいません。まずは昇進を目指しましょう！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = state.subordinates.map(sub => `
+                <div class="bg-slate-950 border ${sub.injured ? 'border-rose-500/60' : 'border-slate-800'} rounded-xl p-3 space-y-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-amber-300 text-[10px] font-bold">${sub.rank}</span>
+                                <span class="text-xs font-black text-white">${sub.name}</span>
+                                ${sub.injured ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">🏥 負傷療養中</span>' : ''}
+                            </div>
+                            <div class="text-[11px] text-emerald-400 font-semibold mt-0.5">性格: ${sub.trait.label}</div>
+                        </div>
+                        <span class="text-[10px] font-mono-tech text-slate-400">配属 ${sub.monthsServed}ヶ月</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400">${sub.trait.desc}</p>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                            <div class="flex justify-between mb-0.5">
+                                <span class="text-slate-400">練度 (卒業80)</span>
+                                <span class="font-mono-tech font-bold text-sky-400">${sub.skill}/100</span>
+                            </div>
+                            <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                <div class="h-full bg-sky-500" style="width: ${sub.skill}%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-0.5">
+                                <span class="text-slate-400">士気・信頼</span>
+                                <span class="font-mono-tech font-bold text-emerald-400">${sub.morale}/100</span>
+                            </div>
+                            <div class="h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500" style="width: ${sub.morale}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderLifestyleShopTab(finance) {
+            document.getElementById('shopSavingsDisplay').textContent = state.savings.toLocaleString();
+            document.getElementById('shopGrossPay').textContent = `+$${finance.gross.toLocaleString()}`;
+            document.getElementById('shopLivingCost').textContent = `-$${finance.livingCost.toLocaleString()}`;
+            document.getElementById('shopNetPay').textContent = finance.net >= 0 ? `+$${finance.net.toLocaleString()}` : `-$${Math.abs(finance.net).toLocaleString()}`;
+
+            const isDeploy = state.phase === 'DEPLOYMENT';
+            const lockNote = document.getElementById('shopDeployLockNote');
+            if (isDeploy) lockNote.classList.remove('hidden');
+            else lockNote.classList.add('hidden');
+
+            const houseEl = document.getElementById('housingTierList');
+            houseEl.innerHTML = HOUSING_TIERS.map(h => {
+                const isCurrent = state.housingTier === h.id;
+                const isOwned = state.housingTier > h.id;
+                const canAfford = state.savings >= h.initCost && !isDeploy;
+
+                let btnHtml = '';
+                if (isCurrent) {
+                    btnHtml = `<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">現在居住中</span>`;
+                } else if (isOwned) {
+                    btnHtml = `<span class="px-2 py-1 rounded bg-slate-800 text-slate-500 text-[10px]">契約済</span>`;
+                } else {
+                    btnHtml = `<button onclick="upgradeHousing(${h.id})" ${canAfford ? '' : 'disabled'}
+                        class="px-2.5 py-1 rounded text-[10px] font-black transition ${canAfford ? 'bg-amber-500 hover:bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
+                        転居 ($${h.initCost.toLocaleString()})
+                    </button>`;
+                }
+
+                return `
+                    <div class="bg-slate-950 border ${isCurrent ? 'border-emerald-500/50' : 'border-slate-800'} rounded-lg p-2.5 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-white truncate">${h.icon} ${h.name}</div>
+                            <div class="text-[10px] text-slate-400 font-mono-tech">維持費 $${h.monthlyCost}/月 | 毎月回復: 体力+${h.stamRegen} 精神+${h.mentalRegen}</div>
+                        </div>
+                        <div class="shrink-0">${btnHtml}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const itemsEl = document.getElementById('lifestyleItemsList');
+            itemsEl.innerHTML = LIFESTYLE_ITEMS.map(item => {
+                const locked = (item.garrisonOnly && isDeploy) || state.savings < item.cost;
+                return `
+                    <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-slate-200 truncate">${item.name}</div>
+                            <div class="text-[10px] text-sky-400 font-mono-tech">${item.desc}</div>
+                        </div>
+                        <button onclick="buyLifestyleItem('${item.id}')" ${locked ? 'disabled' : ''}
+                            class="px-2.5 py-1.5 rounded text-[10px] font-black shrink-0 transition ${!locked ? 'bg-sky-500 hover:bg-sky-400 text-slate-950' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
+                            $${item.cost.toLocaleString()}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== HELPER & MODAL FUNCTIONS ====================
+        function getCurrentRank() {
+            return RANKS[state.track][state.rankIndex];
+        }
+        function getServiceYear() {
+            return Math.floor((state.turn - 1) / 12) + 1;
+        }
+        function getMonth() {
+            return ((state.turn - 1) % 12) + 1;
+        }
+        function getAge() {
+            return 18 + Math.floor((state.turn - 1) / 12);
+        }
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function addCondition(c) {
+            if (!state.conditions.includes(c)) state.conditions.push(c);
+        }
+        function removeCondition(c) {
+            state.conditions = state.conditions.filter(x => x !== c);
+        }
+        function addHighlight(text) {
+            state.highlights.push(text);
+        }
+
+        function addLog(text, colorClass = 'text-slate-300') {
+            const logEl = document.getElementById('gameLogList');
+            const entry = document.createElement('div');
+            entry.className = `${colorClass} border-b border-slate-800/80 pb-1`;
+            entry.textContent = text;
+            logEl.prepend(entry);
+        }
+
+        function setDialogue(speaker, avatarType, text, tag) {
+            document.getElementById('speakerName').textContent = speaker;
+            document.getElementById('dialogueText').textContent = text;
+            document.getElementById('eventTag').textContent = tag;
+            document.getElementById('speakerAvatar').innerHTML = getAvatarSVG(avatarType);
+        }
+
+        function openHelpModal() {
+            playSfx('click');
+            document.getElementById('helpModal').classList.remove('hidden');
+        }
+        function closeHelpModal() {
+            playSfx('click');
+            document.getElementById('helpModal').classList.add('hidden');
+        }
+
+        function confirmRestart() {
+            document.getElementById('modalTitle').textContent = 'タイトルへ戻る確認';
+            document.getElementById('modalBody').textContent = '現在のキャリア進行データはリセットされます。タイトル画面に戻りますか？';
+            const btn = document.getElementById('modalConfirmBtn');
+            btn.textContent = 'タイトルへ戻る';
+            btn.className = 'px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-bold text-white';
+            btn.onclick = resetToTitle;
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+        function resetToTitle() {
+            closeModal();
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('endingScreen').classList.add('hidden');
+            document.getElementById('setupScreen').classList.remove('hidden');
+            document.getElementById('resetBtn').classList.add('hidden');
+            document.getElementById('gameLogList').innerHTML = '';
+        }
+
+        // ==================== INLINE SVG ILLUSTRATIONS ====================
+        function getRankSVG(code) {
+            const isOfficer = code.startsWith('O-');
+            const color = isOfficer ? '#fbbf24' : '#34d399';
+            return `
+                <svg viewBox="0 0 40 40" class="w-9 h-9">
+                    <rect x="3" y="3" width="34" height="34" rx="7" fill="none" stroke="${color}" stroke-width="2" opacity="0.45"/>
+                    ${isOfficer
+                        ? `<polygon points="20,7 23.5,15.5 32.5,15.5 25.2,21 28,30 20,24.5 12,30 14.8,21 7.5,15.5 16.5,15.5" fill="${color}"/>`
+                        : `<path d="M10 23 L20 13 L30 23 M10 29 L20 19 L30 29" fill="none" stroke="${color}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`
+                    }
+                </svg>
+            `;
+        }
+
+        function getAvatarSVG(type) {
+            const bg = type === 'MEDIC' ? '#064e3b' : (type === 'INSTRUCTOR' ? '#78350f' : (type === 'SOLDIER' ? '#1e3a8a' : '#1e293b'));
+            const hatColor = type === 'MEDIC' ? '#10b981' : (type === 'INSTRUCTOR' ? '#d97706' : '#475569');
+            return `
+                <svg viewBox="0 0 64 64" class="w-full h-full">
+                    <rect width="64" height="64" fill="${bg}"/>
+                    <circle cx="32" cy="30" r="12" fill="#fed7aa"/>
+                    <path d="M15 60 C15 44, 49 44, 49 60" fill="#334155"/>
+                    <path d="M17 22 L47 22 L43 13 L21 13 Z" fill="${hatColor}"/>
+                    <rect x="26" y="27" width="4" height="3" rx="1" fill="#0f172a"/>
+                    <rect x="34" y="27" width="4" height="3" rx="1" fill="#0f172a"/>
+                </svg>
+            `;
+        }
+
+        function getStageBgSVG(isDeploy) {
+            if (isDeploy) {
+                return `
+                    <svg viewBox="0 0 600 260" class="w-full h-full object-cover" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="skyDep" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#450a0a"/>
+                                <stop offset="100%" stop-color="#090d16"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="600" height="260" fill="url(#skyDep)"/>
+                        <polygon points="0,185 130,120 270,175 430,110 600,175 600,260 0,260" fill="#1c1917"/>
+                        <circle cx="490" cy="58" r="24" fill="#ef4444" opacity="0.35"/>
+                        <rect x="65" y="152" width="95" height="35" fill="#292524"/>
+                        <line x1="112" y1="118" x2="112" y2="152" stroke="#78716c" stroke-width="2.5"/>
+                    </svg>
+                `;
+            }
+            return `
+                <svg viewBox="0 0 600 260" class="w-full h-full object-cover" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="skyGar" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#064e3b"/>
+                            <stop offset="100%" stop-color="#090d16"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="260" fill="url(#skyGar)"/>
+                    <polygon points="0,192 180,145 360,182 600,138 600,260 0,260" fill="#1e293b"/>
+                    <rect x="55" y="140" width="135" height="55" fill="#334155"/>
+                    <rect x="215" y="155" width="115" height="40" fill="#334155"/>
+                    <line x1="425" y1="92" x2="425" y2="195" stroke="#94a3b8" stroke-width="3"/>
+                    <rect x="425" y="95" width="34" height="19" fill="#f59e0b"/>
+                </svg>
+            `;
+        }
+    </script>
+</body>
+</html>
