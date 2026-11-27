@@ -69,7 +69,7 @@
             <div>
                 <h1 class="text-sm sm:text-base font-black tracking-wider text-slate-100 flex items-center gap-2">
                     SOLDIER'S CAREER
-                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.2 // EXERTION INJURY & SQUAD</span>
+                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.3 // DEPLOYMENT MENTAL STRESS & SQUAD</span>
                 </h1>
                 <p class="text-[10px] text-slate-400 font-mono-tech tracking-widest hidden sm:block">FROM PRIVATE TO COMMAND // MONTHLY LIFE & CAREER SIM</p>
             </div>
@@ -191,7 +191,7 @@
                                     </p>
                                 </div>
                                 <div class="pt-2 border-t border-slate-800/90 text-[11px] text-red-300/90 font-mono-tech space-y-0.5">
-                                    <div>• 戦死: あり / Up or Out: 緩和済</div>
+                                    <div>• 休養回復量・訓練成長効率: 厳しめ</div>
                                     <div>• 期限残り12ヶ月警告＆特例延長あり</div>
                                 </div>
                             </div>
@@ -1044,12 +1044,13 @@
             state.savings -= item.cost;
 
             if (itemId === 'DINNER_TRIP') {
-                state.mental = clamp(state.mental + 28, 0, 100);
+                const tripMental = state.difficulty === 'HARD' ? 15 : 28;
+                state.mental = clamp(state.mental + tripMental, 0, 100);
                 if (state.conditions.includes('PTSD') && Math.random() < 0.45) {
                     removeCondition('PTSD');
                     addLog(`🍽️ 豪華なディナーと小旅行で心が癒され、PTSDが寛解した！（-$${item.cost}）`, 'text-emerald-300 font-bold');
                 } else {
-                    addLog(`🍽️ 高級ディナーと週末の小旅行を楽しみリフレッシュした！（メンタル +28 / -$${item.cost}）`, 'text-sky-300');
+                    addLog(`🍽️ 高級ディナーと週末の小旅行を楽しみリフレッシュした！（メンタル +${tripMental} / -$${item.cost}）`, 'text-sky-300');
                 }
             } else if (itemId === 'ONLINE_COLLEGE') {
                 state.stats.intel = clamp(state.stats.intel + 6, 0, 100);
@@ -1072,20 +1073,23 @@
 
         // ==================== DYNAMIC COMMAND DEFINITIONS ====================
         function getAvailableCommands() {
+            const isHard = state.difficulty === 'HARD';
+            const depRestCost = isHard ? '体力+10 メンタル+10 (HARD抑制)' : '体力・メンタル回復';
+            const garRestCost = isHard ? '体力+15 メンタル+15 (HARD抑制)' : '体力・メンタル大幅回復';
             if (state.phase === 'DEPLOYMENT') {
                 if (state.track === 'OFFICER') {
                     return [
-                        { id: 'OFF_DEP_COMMAND', title: '🗺️ 中隊/大隊の作戦指揮', desc: '前線作戦の立案と指揮を執る。功績大。', cost: '功績↑↑ 統率↑ / 体力-15 精神-13', staminaCost: 15, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
-                        { id: 'OFF_DEP_INSPECT', title: '🫡 前線視察・士気鼓舞', desc: '前線を回り部下と兵士を鼓舞する。', cost: '功績↑ 部下士気↑ / 体力-20 リスク中', staminaCost: 20, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
-                        { id: 'OFF_DEP_LOGISTICS', title: '📡 後方支援・兵站調整', desc: '補給線と情報網を最適化し被害を防ぐ。', cost: '知識↑↑ 功績↑ / 体力-11 安全', staminaCost: 11, style: 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-600/70 text-sky-300' },
-                        { id: 'DEPLOY_REST', title: '⛺ 司令部待機・野戦休息', desc: '作戦の合間に心身を休め傷を癒す。', cost: '体力・メンタル回復', staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                        { id: 'OFF_DEP_COMMAND', title: '🗺️ 中隊/大隊の作戦指揮', desc: '前線作戦の立案と指揮を執る。功績大。', cost: isHard ? '功績↑↑ 統率↑ / 体力-15 精神-20' : '功績↑↑ 統率↑ / 体力-15 精神-13', staminaCost: 15, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'OFF_DEP_INSPECT', title: '🫡 前線視察・士気鼓舞', desc: '前線を回り部下と兵士を鼓舞する。', cost: isHard ? '功績↑ 部下士気↑ / 体力-20 精神-23' : '功績↑ 部下士気↑ / 体力-20 精神-16', staminaCost: 20, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'OFF_DEP_LOGISTICS', title: '📡 後方支援・兵站調整', desc: '補給線と情報網を最適化し被害を防ぐ。', cost: isHard ? '知識↑↑ 功績↑ / 体力-11 精神-16' : '知識↑↑ 功績↑ / 体力-11 精神-9', staminaCost: 11, style: 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-600/70 text-sky-300' },
+                        { id: 'DEPLOY_REST', title: '⛺ 司令部待機・野戦休息', desc: '作戦の合間に心身を休め傷を癒す。', cost: depRestCost, staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
                     ];
                 } else {
                     return [
-                        { id: 'ENL_DEP_PATROL', title: '⚔️ パトロール任務', desc: '危険地帯の偵察・掃討。大きな戦果。', cost: '功績↑↑ 評価↑ / 体力-20 リスク高', staminaCost: 20, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
-                        { id: 'ENL_DEP_DEFEND', title: '🛡️ 拠点防衛・検問', desc: '前線基地（FOB）の警備。堅実な戦果。', cost: '功績↑ 射撃↑ / 体力-15 リスク中', staminaCost: 15, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
-                        { id: 'ENL_DEP_SQUAD', title: '🧭 部下のケア・装備点検', desc: '部下の練度と士気を高め事故を防ぐ。', cost: '部下練度・士気↑ / 体力-11 統率↑', staminaCost: 11, style: 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-600/70 text-purple-300' },
-                        { id: 'DEPLOY_REST', title: '🏥 野戦病院ケア・休息', desc: '治療と休養を取り英気を養う。', cost: '体力・メンタル回復', staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                        { id: 'ENL_DEP_PATROL', title: '⚔️ パトロール任務', desc: '危険地帯の偵察・掃討。大きな戦果。', cost: isHard ? '功績↑↑ 評価↑ / 体力-20 精神-23' : '功績↑↑ 評価↑ / 体力-20 精神-16', staminaCost: 20, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'ENL_DEP_DEFEND', title: '🛡️ 拠点防衛・検問', desc: '前線基地（FOB）の警備。堅実な戦果。', cost: isHard ? '功績↑ 射撃↑ / 体力-15 精神-20' : '功績↑ 射撃↑ / 体力-15 精神-13', staminaCost: 15, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'ENL_DEP_SQUAD', title: '🧭 部下のケア・装備点検', desc: '部下の練度と士気を高め事故を防ぐ。', cost: isHard ? '部下練度・士気↑ / 体力-11 精神-16' : '部下練度・士気↑ / 体力-11 精神-9', staminaCost: 11, style: 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-600/70 text-purple-300' },
+                        { id: 'DEPLOY_REST', title: '🏥 野戦病院ケア・休息', desc: '治療と休養を取り英気を養う。', cost: depRestCost, staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
                     ];
                 }
             }
@@ -1096,7 +1100,7 @@
                     { id: 'OFF_GAR_MENTOR', title: '👥 小隊・部下の統率指導', desc: '直属の部下たちの訓練を直接監督する。', cost: '部下練度↑↑ 統率↑ / 体力-10', staminaCost: 10, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
                     { id: 'OFF_GAR_STAFF', title: '🤝 幕僚会議・人脈形成', desc: '上級司令部や他部隊将校と連携を深める。', cost: '評価↑↑ 知識↑ / 体力-8 精神-10', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
                     { id: 'OFF_GAR_WARCOLLEGE', title: '🎓 軍事大学・戦略研究', desc: '高級将校向けの戦略・リーダーシップ研究。', cost: '統率↑↑ 知識↑ / 体力-8 精神-12', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-indigo-500 text-indigo-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・社交リフレッシュ', desc: '休暇と医療ケアで心身を回復・治療する。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'REST_REHAB', title: '🏥 休養・社交リフレッシュ', desc: '休暇と医療ケアで心身を回復・治療する。', cost: garRestCost, staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
             }
 
@@ -1106,7 +1110,7 @@
                     { id: 'ENL_JR_SHOOT', title: '🎯 射撃訓練・戦術基礎', desc: '小火器の射撃精度と基本戦術を習得。', cost: '射撃↑↑ / 体力HP-14', staminaCost: 14, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
                     { id: 'ENL_JR_DUTY', title: '📚 戦術座学・装備整備', desc: '軍規・戦術マニュアルの学習と整備勤務。', cost: '知識↑↑ 評価↑ / 体力HP-8 精神-10', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
                     { id: 'ENL_JR_GREET', title: '🫡 上官への報告・雑用', desc: '上官に顔を売り、仲間との信頼を築く。', cost: '評価↑↑ 統率↑ / 体力HP-6 精神-6', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・外出リフレッシュ', desc: '兵舎での休息と通院で傷や疲れを癒す。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'REST_REHAB', title: '🏥 休養・外出リフレッシュ', desc: '兵舎での休息と通院で傷や疲れを癒す。', cost: garRestCost, staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
             } else {
                 return [
@@ -1114,7 +1118,7 @@
                     { id: 'ENL_NCO_MENTOR', title: '👥 部下の個別指導', desc: '直属の部下をマンツーマンで鍛え上げる。', cost: '部下練度・士気↑↑ / 体力HP-10 統率↑', staminaCost: 10, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
                     { id: 'ENL_NCO_ACADEMY', title: '📚 専門課程・下士官学校', desc: 'NCOアカデミーで高度な管理・戦術を学ぶ。', cost: '知識↑↑ 統率↑ / 体力HP-6 精神-12', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
                     { id: 'ENL_NCO_CLUB', title: '🤝 上官・司令部との調整', desc: '将校団や上級曹長との連携を強化する。', cost: '評価↑↑ 知識↑ / 体力HP-6 精神-8', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・家族/趣味の時間', desc: '心身のリフレッシュと負傷・PTSD治療。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'REST_REHAB', title: '🏥 休養・家族/趣味の時間', desc: '心身のリフレッシュと負傷・PTSD治療。', cost: garRestCost, staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
             }
         }
@@ -1133,6 +1137,13 @@
                 addLog(`📋 【配置転換】重傷による前線制限に伴い「教官・後方支援適性」が付与された（知識 +8, 統率 +8）。`, 'text-sky-300 font-bold');
                 addHighlight(`${getAge()}歳: 負傷による重傷を経て教官・後方支援適性を獲得`);
             }
+        }
+
+        // Helper for scaling command stat/eval/merit gains in HARD mode (~65%, min +1)
+        function scaleCmdGain(val) {
+            if (val <= 0) return val;
+            if (state.difficulty !== 'HARD') return val;
+            return Math.max(1, Math.round(val * 0.65));
         }
 
         // ==================== MONTHLY TURN EXECUTION ====================
@@ -1165,38 +1176,41 @@
                         playSfx('alert');
                         return;
                     }
-                    const g = Math.max(2, rand(3, 5) - frontPenalty);
+                    const g = scaleCmdGain(Math.max(2, rand(3, 5) - frontPenalty));
+                    const ev = scaleCmdGain(1);
                     state.stats.phys = clamp(state.stats.phys + g, 0, 100);
-                    state.stats.eval = clamp(state.stats.eval + 1, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 14, 0, 100);
                     state.mental = clamp(state.mental - 3, 0, 100);
-                    msg = `早朝からのPT（体力錬成）と重装備行軍を完遂した。（体力 +${g}, 評価 +1）`;
+                    msg = `早朝からのPT（体力錬成）と重装備行軍を完遂した。（体力 +${g}, 評価 +${ev}）`;
                     speaker = '指導教官 (Drill Sgt)';
                     break;
                 }
                 case 'ENL_JR_SHOOT': {
-                    const g = Math.max(2, rand(3, 5) - frontPenalty);
+                    const g = scaleCmdGain(Math.max(2, rand(3, 5) - frontPenalty));
+                    const ev = scaleCmdGain(1);
                     state.stats.combat = clamp(state.stats.combat + g, 0, 100);
-                    state.stats.eval = clamp(state.stats.eval + 1, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 14, 0, 100);
                     state.mental = clamp(state.mental - 4, 0, 100);
-                    msg = `射撃場での実弾演習と近接戦闘ドリルで好成績を収めた。（射撃 +${g}, 評価 +1）`;
+                    msg = `射撃場での実弾演習と近接戦闘ドリルで好成績を収めた。（射撃 +${g}, 評価 +${ev}）`;
                     speaker = '射撃教官 (Range NCO)';
                     break;
                 }
                 case 'ENL_JR_DUTY': {
-                    const g = rand(3, 5) + staffBonus;
+                    const g = scaleCmdGain(rand(3, 5) + staffBonus);
+                    const ev = scaleCmdGain(2);
                     state.stats.intel = clamp(state.stats.intel + g, 0, 100);
-                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 8, 0, 100);
                     state.mental = clamp(state.mental - 10, 0, 100);
-                    msg = `戦術マニュアルの座学と武器庫の整備勤務を完璧にこなした。（知識 +${g}, 評価 +2）`;
+                    msg = `戦術マニュアルの座学と武器庫の整備勤務を完璧にこなした。（知識 +${g}, 評価 +${ev}）`;
                     speaker = '先任軍曹';
                     break;
                 }
                 case 'ENL_JR_GREET': {
-                    const ev = rand(3, 5);
-                    const ld = rand(2, 4);
+                    const ev = scaleCmdGain(rand(3, 5));
+                    const ld = scaleCmdGain(rand(2, 4));
                     state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stats.lead = clamp(state.stats.lead + ld, 0, 100);
                     state.stamina = clamp(state.stamina - 6, 0, 100);
@@ -1206,26 +1220,28 @@
                     break;
                 }
                 case 'ENL_NCO_TACTICS': {
-                    const c = Math.max(1, rand(2, 4) - frontPenalty);
-                    const l = rand(3, 5) + staffBonus;
+                    const c = scaleCmdGain(Math.max(1, rand(2, 4) - frontPenalty));
+                    const l = scaleCmdGain(rand(3, 5) + staffBonus);
+                    const ev = scaleCmdGain(2);
                     state.stats.combat = clamp(state.stats.combat + c, 0, 100);
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
-                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 12, 0, 100);
                     state.mental = clamp(state.mental - 6, 0, 100);
-                    msg = `分隊の戦術訓練を指揮し、実戦さながらの連携を叩き込んだ。（統率 +${l}, 射撃 +${c}, 評価 +2）`;
+                    msg = `分隊の戦術訓練を指揮し、実戦さながらの連携を叩き込んだ。（統率 +${l}, 射撃 +${c}, 評価 +${ev}）`;
                     speaker = '中隊先任軍曹';
                     break;
                 }
                 case 'ENL_NCO_MENTOR': {
-                    const l = rand(3, 5);
+                    const l = scaleCmdGain(rand(3, 5));
+                    const ev = scaleCmdGain(2);
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
-                    state.stats.eval = clamp(state.stats.eval + 2, 0, 100);
+                    state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 10, 0, 100);
                     state.mental = clamp(state.mental - 8, 0, 100);
                     state.subordinates.forEach(s => {
-                        s.skill = clamp(s.skill + rand(7, 11), 0, 100);
-                        s.morale = clamp(s.morale + rand(8, 12), 0, 100);
+                        s.skill = clamp(s.skill + scaleCmdGain(rand(7, 11)), 0, 100);
+                        s.morale = clamp(s.morale + scaleCmdGain(rand(8, 12)), 0, 100);
                     });
                     msg = `直属の部下たちをマンツーマンで指導し、全員の練度と士気が大きく向上した！（部下練度・士気↑↑, 統率 +${l}）`;
                     speaker = '直属の部下たち';
@@ -1233,8 +1249,8 @@
                     break;
                 }
                 case 'ENL_NCO_ACADEMY': {
-                    const i = rand(4, 6) + staffBonus;
-                    const l = rand(2, 3);
+                    const i = scaleCmdGain(rand(4, 6) + staffBonus);
+                    const l = scaleCmdGain(rand(2, 3));
                     state.stats.intel = clamp(state.stats.intel + i, 0, 100);
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
                     state.stamina = clamp(state.stamina - 6, 0, 100);
@@ -1244,8 +1260,8 @@
                     break;
                 }
                 case 'ENL_NCO_CLUB': {
-                    const ev = rand(3, 6);
-                    const i = rand(2, 4);
+                    const ev = scaleCmdGain(rand(3, 6));
+                    const i = scaleCmdGain(rand(2, 4));
                     state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stats.intel = clamp(state.stats.intel + i, 0, 100);
                     state.stamina = clamp(state.stamina - 6, 0, 100);
@@ -1255,8 +1271,8 @@
                     break;
                 }
                 case 'OFF_GAR_PLAN': {
-                    const i = rand(4, 7) + staffBonus;
-                    const l = rand(2, 4);
+                    const i = scaleCmdGain(rand(4, 7) + staffBonus);
+                    const l = scaleCmdGain(rand(2, 4));
                     state.stats.intel = clamp(state.stats.intel + i, 0, 100);
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
                     state.stamina = clamp(state.stamina - 8, 0, 100);
@@ -1266,15 +1282,15 @@
                     break;
                 }
                 case 'OFF_GAR_MENTOR': {
-                    const l = rand(4, 6);
-                    const ev = rand(2, 4);
+                    const l = scaleCmdGain(rand(4, 6));
+                    const ev = scaleCmdGain(rand(2, 4));
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
                     state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stamina = clamp(state.stamina - 10, 0, 100);
                     state.mental = clamp(state.mental - 8, 0, 100);
                     state.subordinates.forEach(s => {
-                        s.skill = clamp(s.skill + rand(7, 11), 0, 100);
-                        s.morale = clamp(s.morale + rand(8, 12), 0, 100);
+                        s.skill = clamp(s.skill + scaleCmdGain(rand(7, 11)), 0, 100);
+                        s.morale = clamp(s.morale + scaleCmdGain(rand(8, 12)), 0, 100);
                     });
                     msg = `小隊・部下たちの訓練視察と個別面談を行い、部隊の結束と練度を引き上げた。（部下練度・士気↑↑, 統率 +${l}, 評価 +${ev}）`;
                     speaker = '直属の部下たち';
@@ -1282,8 +1298,8 @@
                     break;
                 }
                 case 'OFF_GAR_STAFF': {
-                    const ev = rand(4, 6);
-                    const i = rand(2, 4);
+                    const ev = scaleCmdGain(rand(4, 6));
+                    const i = scaleCmdGain(rand(2, 4));
                     state.stats.eval = clamp(state.stats.eval + ev, 0, 100);
                     state.stats.intel = clamp(state.stats.intel + i, 0, 100);
                     state.stamina = clamp(state.stamina - 8, 0, 100);
@@ -1293,8 +1309,8 @@
                     break;
                 }
                 case 'OFF_GAR_WARCOLLEGE': {
-                    const l = rand(4, 6) + staffBonus;
-                    const i = rand(3, 5);
+                    const l = scaleCmdGain(rand(4, 6) + staffBonus);
+                    const i = scaleCmdGain(rand(3, 5));
                     state.stats.lead = clamp(state.stats.lead + l, 0, 100);
                     state.stats.intel = clamp(state.stats.intel + i, 0, 100);
                     state.stamina = clamp(state.stamina - 8, 0, 100);
@@ -1304,8 +1320,11 @@
                     break;
                 }
                 case 'REST_REHAB': {
-                    state.stamina = clamp(state.stamina + 34, 0, 100);
-                    state.mental = clamp(state.mental + 32, 0, 100);
+                    const isHard = state.difficulty === 'HARD';
+                    const stamRec = isHard ? 15 : 34;
+                    const mentRec = isHard ? 15 : 32;
+                    state.stamina = clamp(state.stamina + stamRec, 0, 100);
+                    state.mental = clamp(state.mental + mentRec, 0, 100);
                     let healMsg = '';
                     if (hasHeavyInjury) {
                         removeCondition('INJURED_HEAVY');
@@ -1320,7 +1339,9 @@
                         removeCondition('PTSD');
                         healMsg += ' カウンセリング治療によりPTSDが寛解した！';
                     }
-                    msg = `休暇と医療ケアで心身をしっかりと休めた。（体力・メンタル 大幅回復）${healMsg}`;
+                    msg = isHard
+                        ? `休暇と医療ケアで慎重に療養した。（体力+${stamRec}, メンタル+${mentRec}）${healMsg}`
+                        : `休暇と医療ケアで心身をしっかりと休めた。（体力・メンタル 大幅回復）${healMsg}`;
                     speaker = '軍医 (Army Medic)';
                     avatarType = 'MEDIC';
                     break;
@@ -1329,19 +1350,20 @@
                 case 'OFF_DEP_INSPECT': {
                     const isOff = actionId === 'OFF_DEP_INSPECT';
                     const avgSubSkill = getAvgSubordinateSkill();
-                    const meritGain = rand(7, 11) + Math.floor((isOff ? state.stats.lead : state.stats.combat) / 22) + Math.floor(avgSubSkill / 30);
-                    const evalGain = rand(3, 5);
+                    const meritGain = scaleCmdGain(rand(7, 11) + Math.floor((isOff ? state.stats.lead : state.stats.combat) / 22) + Math.floor(avgSubSkill / 30));
+                    const evalGain = scaleCmdGain(rand(3, 5));
                     state.stats.merit += meritGain;
                     state.stats.eval = clamp(state.stats.eval + evalGain, 0, 100);
                     if (isOff) {
-                        state.stats.lead = clamp(state.stats.lead + 2, 0, 100);
-                        state.subordinates.forEach(s => s.morale = clamp(s.morale + 6, 0, 100));
+                        state.stats.lead = clamp(state.stats.lead + scaleCmdGain(2), 0, 100);
+                        state.subordinates.forEach(s => s.morale = clamp(s.morale + scaleCmdGain(6), 0, 100));
                     } else {
-                        state.stats.combat = clamp(state.stats.combat + 2, 0, 100);
+                        state.stats.combat = clamp(state.stats.combat + scaleCmdGain(2), 0, 100);
                     }
 
+                    const extraHardMental1 = state.difficulty === 'HARD' ? 7 : 0;
                     state.stamina = clamp(state.stamina - 20, 0, 100);
-                    state.mental = clamp(state.mental - 16, 0, 100);
+                    state.mental = clamp(state.mental - (16 + extraHardMental1), 0, 100);
 
                     msg = isOff
                         ? `砲火の飛び交う最前線陣地を視察し、部下と兵士たちを鼓舞した！（功績 +${meritGain}, 評価 +${evalGain}）`
@@ -1357,15 +1379,16 @@
                 case 'ENL_DEP_DEFEND':
                 case 'OFF_DEP_COMMAND': {
                     const isOff = actionId === 'OFF_DEP_COMMAND';
-                    const meritGain = isOff ? rand(6, 9) : rand(4, 7);
-                    const evalGain = rand(2, 4);
+                    const meritGain = scaleCmdGain(isOff ? rand(6, 9) : rand(4, 7));
+                    const evalGain = scaleCmdGain(rand(2, 4));
                     state.stats.merit += meritGain;
                     state.stats.eval = clamp(state.stats.eval + evalGain, 0, 100);
-                    if (isOff) state.stats.lead = clamp(state.stats.lead + 3, 0, 100);
-                    else state.stats.combat = clamp(state.stats.combat + 2, 0, 100);
+                    if (isOff) state.stats.lead = clamp(state.stats.lead + scaleCmdGain(3), 0, 100);
+                    else state.stats.combat = clamp(state.stats.combat + scaleCmdGain(2), 0, 100);
 
+                    const extraHardMental2 = state.difficulty === 'HARD' ? 7 : 0;
                     state.stamina = clamp(state.stamina - 15, 0, 100);
-                    state.mental = clamp(state.mental - 13, 0, 100);
+                    state.mental = clamp(state.mental - (13 + extraHardMental2), 0, 100);
 
                     msg = isOff
                         ? `戦術司令室で作戦指揮を執り、部隊の連携を統制して任務を成功させた！（功績 +${meritGain}, 評価 +${evalGain}）`
@@ -1381,17 +1404,18 @@
                 case 'ENL_DEP_SQUAD':
                 case 'OFF_DEP_LOGISTICS': {
                     const isOff = actionId === 'OFF_DEP_LOGISTICS';
-                    const leadGain = rand(3, 5);
-                    const intelGain = rand(3, 5);
-                    const meritGain = rand(3, 6);
+                    const leadGain = scaleCmdGain(rand(3, 5));
+                    const intelGain = scaleCmdGain(rand(3, 5));
+                    const meritGain = scaleCmdGain(rand(3, 6));
                     state.stats.lead = clamp(state.stats.lead + leadGain, 0, 100);
                     state.stats.intel = clamp(state.stats.intel + intelGain, 0, 100);
                     state.stats.merit += meritGain;
+                    const extraHardMental3 = state.difficulty === 'HARD' ? 7 : 0;
                     state.stamina = clamp(state.stamina - 11, 0, 100);
-                    state.mental = clamp(state.mental - 9, 0, 100);
+                    state.mental = clamp(state.mental - (9 + extraHardMental3), 0, 100);
                     state.subordinates.forEach(s => {
-                        s.skill = clamp(s.skill + 5, 0, 100);
-                        s.morale = clamp(s.morale + 7, 0, 100);
+                        s.skill = clamp(s.skill + scaleCmdGain(5), 0, 100);
+                        s.morale = clamp(s.morale + scaleCmdGain(7), 0, 100);
                     });
 
                     msg = isOff
@@ -1402,13 +1426,16 @@
                     break;
                 }
                 case 'DEPLOY_REST': {
-                    state.stamina = clamp(state.stamina + 28, 0, 100);
-                    state.mental = clamp(state.mental + 25, 0, 100);
+                    const isHard = state.difficulty === 'HARD';
+                    const stamRec = isHard ? 10 : 28;
+                    const mentRec = isHard ? 10 : 25;
+                    state.stamina = clamp(state.stamina + stamRec, 0, 100);
+                    state.mental = clamp(state.mental + mentRec, 0, 100);
                     if (hasLightInjury && Math.random() < 0.7) {
                         removeCondition('INJURED_LIGHT');
-                        msg = '野戦病院での手当てにより軽傷が完治した。（体力・メンタル回復）';
+                        msg = `野戦病院での手当てにより軽傷が完治した。（体力+${stamRec}, メンタル+${mentRec}）`;
                     } else {
-                        msg = '後方基地で休養を取り、次の作戦に備えて体力を温存した。（体力・メンタル回復）';
+                        msg = `後方基地で休養を取り、次の作戦に備えて体力を温存した。（体力+${stamRec}, メンタル+${mentRec}）`;
                     }
                     speaker = '野戦軍医';
                     avatarType = 'MEDIC';
@@ -1474,8 +1501,9 @@
             // Passive Housing Regeneration & Monthly Finance Settlement
             const house = HOUSING_TIERS[state.housingTier];
             if (state.phase === 'GARRISON') {
+                const effMentalRegen = state.difficulty === 'HARD' ? house.stamRegen : house.mentalRegen;
                 state.stamina = clamp(state.stamina + house.stamRegen, 0, 100);
-                state.mental = clamp(state.mental + house.mentalRegen, 0, 100);
+                state.mental = clamp(state.mental + effMentalRegen, 0, 100);
             }
             const finance = getMonthlyFinanceBreakdown();
             state.savings += finance.net;
@@ -2338,7 +2366,7 @@
                     <div class="bg-slate-950 border ${isCurrent ? 'border-emerald-500/50' : 'border-slate-800'} rounded-lg p-2.5 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <div class="text-xs font-bold text-white truncate">${h.icon} ${h.name}</div>
-                            <div class="text-[10px] text-slate-400 font-mono-tech">維持費 $${h.monthlyCost}/月 | 毎月回復: 体力+${h.stamRegen} 精神+${h.mentalRegen}</div>
+                            <div class="text-[10px] text-slate-400 font-mono-tech">維持費 $${h.monthlyCost}/月 | 毎月回復: 体力+${h.stamRegen} 精神+${state.difficulty === 'HARD' ? h.stamRegen : h.mentalRegen}</div>
                         </div>
                         <div class="shrink-0">${btnHtml}</div>
                     </div>
@@ -2352,7 +2380,7 @@
                     <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <div class="text-xs font-bold text-slate-200 truncate">${item.name}</div>
-                            <div class="text-[10px] text-sky-400 font-mono-tech">${item.desc}</div>
+                            <div class="text-[10px] text-sky-400 font-mono-tech">${item.id === 'DINNER_TRIP' && state.difficulty === 'HARD' ? 'メンタル+15 / PTSD緩和 (HARD抑制)' : item.desc}</div>
                         </div>
                         <button onclick="buyLifestyleItem('${item.id}')" ${locked ? 'disabled' : ''}
                             class="px-2.5 py-1.5 rounded text-[10px] font-black shrink-0 transition ${!locked ? 'bg-sky-500 hover:bg-sky-400 text-slate-950' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
