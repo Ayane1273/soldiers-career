@@ -69,7 +69,7 @@
             <div>
                 <h1 class="text-sm sm:text-base font-black tracking-wider text-slate-100 flex items-center gap-2">
                     SOLDIER'S CAREER
-                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.1 // RELAXED HARD & SQUAD</span>
+                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.2 // EXERTION INJURY & SQUAD</span>
                 </h1>
                 <p class="text-[10px] text-slate-400 font-mono-tech tracking-widest hidden sm:block">FROM PRIVATE TO COMMAND // MONTHLY LIFE & CAREER SIM</p>
             </div>
@@ -615,8 +615,8 @@
                     <p>18歳（二等兵 E-1）で入隊し、原則<strong>勤続20年（38歳）</strong>で満期定年を迎えます（※高階級へ昇進すると定年年齢が最大48歳・勤続30年まで延長されます）。約3年ごとに<strong>9〜12ヶ月間の海外派遣</strong>が発令されます。</p>
                 </div>
                 <div>
-                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-red-500 pl-2">2. HARDモード「Up or Out（昇進期限）」の緩和＆救済措置</h4>
-                    <p>HARDモードでは各階級に在任期限（若手48〜60ヶ月、中堅・上級72〜120ヶ月）が設定されています。<strong>残り12ヶ月（1年）を切ると警告表示</strong>が出現し、万が一期限に到達しても<strong>「上官評価」や「功績」が高い場合は特例延長（ウェイバー）審査</strong>が発生して期限を延長できます。</p>
+                    <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-red-500 pl-2">2. 体力不足・限界時の無理押しリスク（NORMAL / HARD限定）</h4>
+                    <p><strong>NORMAL・HARDモード</strong>では、体力が不足している状態（または体力0）で訓練や任務を強行すると、<strong>無理が祟って上官評価の低下や負傷（軽傷・重傷への悪化）</strong>が発生します（EASYモードでは発生しません）。さらに<strong>HARDモード限定で、重傷のまま体力不足の無理押しを続けると容態が悪化し戦死・殉職する危険</strong>があります。またHARDモードでは各階級に在任期限があり、<strong>残り12ヶ月警告</strong>と<strong>特例延長（ウェイバー）審査</strong>が適用されます。</p>
                 </div>
                 <div>
                     <h4 class="font-extrabold text-white text-sm mb-1 border-l-4 border-emerald-500 pl-2">3. 直属の部下システム（三等軍曹 E-5 / 少尉 O-1 で解禁）</h4>
@@ -775,7 +775,6 @@
         }
 
         // ==================== RANK, PAY & LIFESTYLE DATABASES ====================
-        // Relaxed maxMonthsHard limits (generous 48 to 120 months) so HARD mode feels strategic rather than punishing
         const RANKS = {
             ENLISTED: [
                 { code: 'E-1', name: '二等兵 (Private)', pay: 2017, maxMonthsHard: 48, req: null },
@@ -820,9 +819,9 @@
         };
 
         const DIFFICULTY_MODS = {
-            EASY:   { label: 'EASY (体験モード)', injuryMult: 0.35, reqScale: 0.80, canDie: false, upOrOut: false, allowOCS: false, color: 'text-emerald-400' },
-            NORMAL: { label: 'NORMAL (標準モード)', injuryMult: 1.0,  reqScale: 1.0,  canDie: false, upOrOut: false, allowOCS: true,  color: 'text-amber-400' },
-            HARD:   { label: 'HARD (実戦リアル)', injuryMult: 1.40, reqScale: 1.02, canDie: true,  upOrOut: true,  allowOCS: true,  color: 'text-red-400' }
+            EASY:   { label: 'EASY (体験モード)', injuryMult: 0.35, reqScale: 0.80, canDie: false, upOrOut: false, allowOCS: false, exertionPenalty: false, color: 'text-emerald-400' },
+            NORMAL: { label: 'NORMAL (標準モード)', injuryMult: 1.0,  reqScale: 1.0,  canDie: false, upOrOut: false, allowOCS: true,  exertionPenalty: true,  color: 'text-amber-400' },
+            HARD:   { label: 'HARD (実戦リアル)', injuryMult: 1.40, reqScale: 1.02, canDie: true,  upOrOut: true,  allowOCS: true,  exertionPenalty: true,  color: 'text-red-400' }
         };
 
         // ==================== GAME STATE ====================
@@ -840,12 +839,12 @@
                 branchKey: branchKey,
                 branchName: bInit.name,
                 difficulty: diffKey,
-                turn: 1, // 1 turn = 1 month. 240 turns = 20 years (Age 38), up to 360 turns = 30 years (Age 48)
+                turn: 1,
                 maxTurns: 240,
                 track: 'ENLISTED',
                 rankIndex: 0,
                 monthsInGrade: 0,
-                bonusHardMonths: 0, // Granted via Special Waiver if near Up or Out limit
+                bonusHardMonths: 0,
                 waiverUsedForRank: false,
                 stamina: 100,
                 mental: 100,
@@ -864,6 +863,7 @@
                 deployCount: 0,
                 nextDeployTurn: 28,
                 conditions: [],
+                heavyExertionCount: 0,
                 medals: [],
                 subordinates: [],
                 mentoredCount: 0,
@@ -1075,47 +1075,63 @@
             if (state.phase === 'DEPLOYMENT') {
                 if (state.track === 'OFFICER') {
                     return [
-                        { id: 'OFF_DEP_COMMAND', title: '🗺️ 中隊/大隊の作戦指揮', desc: '前線作戦の立案と指揮を執る。功績大。', cost: '功績↑↑ 統率↑ / 精神-14', style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
-                        { id: 'OFF_DEP_INSPECT', title: '🫡 前線視察・士気鼓舞', desc: '前線を回り部下と兵士を鼓舞する。', cost: '功績↑ 部下士気↑ / リスク中', style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
-                        { id: 'OFF_DEP_LOGISTICS', title: '📡 後方支援・兵站調整', desc: '補給線と情報網を最適化し被害を防ぐ。', cost: '知識↑↑ 功績↑ / 安全', style: 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-600/70 text-sky-300' },
-                        { id: 'DEPLOY_REST', title: '⛺ 司令部待機・野戦休息', desc: '作戦の合間に心身を休め傷を癒す。', cost: '体力・メンタル回復', style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                        { id: 'OFF_DEP_COMMAND', title: '🗺️ 中隊/大隊の作戦指揮', desc: '前線作戦の立案と指揮を執る。功績大。', cost: '功績↑↑ 統率↑ / 体力-15 精神-13', staminaCost: 15, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'OFF_DEP_INSPECT', title: '🫡 前線視察・士気鼓舞', desc: '前線を回り部下と兵士を鼓舞する。', cost: '功績↑ 部下士気↑ / 体力-20 リスク中', staminaCost: 20, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'OFF_DEP_LOGISTICS', title: '📡 後方支援・兵站調整', desc: '補給線と情報網を最適化し被害を防ぐ。', cost: '知識↑↑ 功績↑ / 体力-11 安全', staminaCost: 11, style: 'bg-sky-950/50 hover:bg-sky-900/60 border-sky-600/70 text-sky-300' },
+                        { id: 'DEPLOY_REST', title: '⛺ 司令部待機・野戦休息', desc: '作戦の合間に心身を休め傷を癒す。', cost: '体力・メンタル回復', staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
                     ];
                 } else {
                     return [
-                        { id: 'ENL_DEP_PATROL', title: '⚔️ パトロール任務', desc: '危険地帯の偵察・掃討。大きな戦果。', cost: '功績↑↑ 評価↑ / リスク高', style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
-                        { id: 'ENL_DEP_DEFEND', title: '🛡️ 拠点防衛・検問', desc: '前線基地（FOB）の警備。堅実な戦果。', cost: '功績↑ 射撃↑ / リスク中', style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
-                        { id: 'ENL_DEP_SQUAD', title: '🧭 部下のケア・装備点検', desc: '部下の練度と士気を高め事故を防ぐ。', cost: '部下練度・士気↑ 統率↑', style: 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-600/70 text-purple-300' },
-                        { id: 'DEPLOY_REST', title: '🏥 野戦病院ケア・休息', desc: '治療と休養を取り英気を養う。', cost: '体力・メンタル回復', style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
+                        { id: 'ENL_DEP_PATROL', title: '⚔️ パトロール任務', desc: '危険地帯の偵察・掃討。大きな戦果。', cost: '功績↑↑ 評価↑ / 体力-20 リスク高', staminaCost: 20, style: 'bg-red-950/60 hover:bg-red-900/70 border-red-600/70 text-red-300' },
+                        { id: 'ENL_DEP_DEFEND', title: '🛡️ 拠点防衛・検問', desc: '前線基地（FOB）の警備。堅実な戦果。', cost: '功績↑ 射撃↑ / 体力-15 リスク中', staminaCost: 15, style: 'bg-amber-950/50 hover:bg-amber-900/60 border-amber-600/70 text-amber-300' },
+                        { id: 'ENL_DEP_SQUAD', title: '🧭 部下のケア・装備点検', desc: '部下の練度と士気を高め事故を防ぐ。', cost: '部下練度・士気↑ / 体力-11 統率↑', staminaCost: 11, style: 'bg-purple-950/50 hover:bg-purple-900/60 border-purple-600/70 text-purple-300' },
+                        { id: 'DEPLOY_REST', title: '🏥 野戦病院ケア・休息', desc: '治療と休養を取り英気を養う。', cost: '体力・メンタル回復', staminaCost: 0, style: 'bg-slate-900 hover:bg-slate-800 border-slate-600 text-emerald-400' }
                     ];
                 }
             }
 
             if (state.track === 'OFFICER') {
                 return [
-                    { id: 'OFF_GAR_PLAN', title: '🗺️ 作戦計画立案', desc: '演習シナリオと防衛計画を策定する。', cost: '知識↑↑ 統率↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
-                    { id: 'OFF_GAR_MENTOR', title: '👥 小隊・部下の統率指導', desc: '直属の部下たちの訓練を直接監督する。', cost: '部下練度↑↑ 統率↑ / 体力-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
-                    { id: 'OFF_GAR_STAFF', title: '🤝 幕僚会議・人脈形成', desc: '上級司令部や他部隊将校と連携を深める。', cost: '評価↑↑ 知識↑ / 精神-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
-                    { id: 'OFF_GAR_WARCOLLEGE', title: '🎓 軍事大学・戦略研究', desc: '高級将校向けの戦略・リーダーシップ研究。', cost: '統率↑↑ 知識↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-indigo-500 text-indigo-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・社交リフレッシュ', desc: '休暇と医療ケアで心身を回復・治療する。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'OFF_GAR_PLAN', title: '🗺️ 作戦計画立案', desc: '演習シナリオと防衛計画を策定する。', cost: '知識↑↑ 統率↑ / 体力-8 精神-12', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'OFF_GAR_MENTOR', title: '👥 小隊・部下の統率指導', desc: '直属の部下たちの訓練を直接監督する。', cost: '部下練度↑↑ 統率↑ / 体力-10', staminaCost: 10, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
+                    { id: 'OFF_GAR_STAFF', title: '🤝 幕僚会議・人脈形成', desc: '上級司令部や他部隊将校と連携を深める。', cost: '評価↑↑ 知識↑ / 体力-8 精神-10', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'OFF_GAR_WARCOLLEGE', title: '🎓 軍事大学・戦略研究', desc: '高級将校向けの戦略・リーダーシップ研究。', cost: '統率↑↑ 知識↑ / 体力-8 精神-12', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-indigo-500 text-indigo-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・社交リフレッシュ', desc: '休暇と医療ケアで心身を回復・治療する。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
             }
 
             if (state.rankIndex <= 3) {
                 return [
-                    { id: 'ENL_JR_PHYS', title: '🏃 体力錬成 (PT)', desc: '基礎体力と耐久力を徹底的に鍛える。', cost: '体力↑↑ / 体力HP-14', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
-                    { id: 'ENL_JR_SHOOT', title: '🎯 射撃訓練・戦術基礎', desc: '小火器の射撃精度と基本戦術を習得。', cost: '射撃↑↑ / 体力HP-14', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
-                    { id: 'ENL_JR_DUTY', title: '📚 戦術座学・装備整備', desc: '軍規・戦術マニュアルの学習と整備勤務。', cost: '知識↑↑ 評価↑ / 精神-10', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
-                    { id: 'ENL_JR_GREET', title: '🫡 上官への報告・雑用', desc: '上官に顔を売り、仲間との信頼を築く。', cost: '評価↑↑ 統率↑ / 精神-6', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・外出リフレッシュ', desc: '兵舎での休息と通院で傷や疲れを癒す。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'ENL_JR_PHYS', title: '🏃 体力錬成 (PT)', desc: '基礎体力と耐久力を徹底的に鍛える。', cost: '体力↑↑ / 体力HP-14', staminaCost: 14, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_JR_SHOOT', title: '🎯 射撃訓練・戦術基礎', desc: '小火器の射撃精度と基本戦術を習得。', cost: '射撃↑↑ / 体力HP-14', staminaCost: 14, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_JR_DUTY', title: '📚 戦術座学・装備整備', desc: '軍規・戦術マニュアルの学習と整備勤務。', cost: '知識↑↑ 評価↑ / 体力HP-8 精神-10', staminaCost: 8, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'ENL_JR_GREET', title: '🫡 上官への報告・雑用', desc: '上官に顔を売り、仲間との信頼を築く。', cost: '評価↑↑ 統率↑ / 体力HP-6 精神-6', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・外出リフレッシュ', desc: '兵舎での休息と通院で傷や疲れを癒す。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
             } else {
                 return [
-                    { id: 'ENL_NCO_TACTICS', title: '🎖️ 部隊戦術訓練', desc: '分隊・小隊の実戦的な戦闘訓練を指揮。', cost: '射撃↑ 統率↑↑ / 体力HP-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
-                    { id: 'ENL_NCO_MENTOR', title: '👥 部下の個別指導', desc: '直属の部下をマンツーマンで鍛え上げる。', cost: '部下練度・士気↑↑ 統率↑', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
-                    { id: 'ENL_NCO_ACADEMY', title: '📚 専門課程・下士官学校', desc: 'NCOアカデミーで高度な管理・戦術を学ぶ。', cost: '知識↑↑ 統率↑ / 精神-12', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
-                    { id: 'ENL_NCO_CLUB', title: '🤝 上官・司令部との調整', desc: '将校団や上級曹長との連携を強化する。', cost: '評価↑↑ 知識↑ / 精神-8', style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
-                    { id: 'REST_REHAB', title: '🏥 休養・家族/趣味の時間', desc: '心身のリフレッシュと負傷・PTSD治療。', cost: '体力・メンタル大幅回復', style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
+                    { id: 'ENL_NCO_TACTICS', title: '🎖️ 部隊戦術訓練', desc: '分隊・小隊の実戦的な戦闘訓練を指揮。', cost: '射撃↑ 統率↑↑ / 体力HP-12', staminaCost: 12, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-amber-500 text-amber-400' },
+                    { id: 'ENL_NCO_MENTOR', title: '👥 部下の個別指導', desc: '直属の部下をマンツーマンで鍛え上げる。', cost: '部下練度・士気↑↑ / 体力HP-10 統率↑', staminaCost: 10, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-emerald-500 text-emerald-400' },
+                    { id: 'ENL_NCO_ACADEMY', title: '📚 専門課程・下士官学校', desc: 'NCOアカデミーで高度な管理・戦術を学ぶ。', cost: '知識↑↑ 統率↑ / 体力HP-6 精神-12', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-sky-500 text-sky-400' },
+                    { id: 'ENL_NCO_CLUB', title: '🤝 上官・司令部との調整', desc: '将校団や上級曹長との連携を強化する。', cost: '評価↑↑ 知識↑ / 体力HP-6 精神-8', staminaCost: 6, style: 'bg-slate-900 hover:bg-slate-800 border-slate-700 hover:border-purple-500 text-purple-400' },
+                    { id: 'REST_REHAB', title: '🏥 休養・家族/趣味の時間', desc: '心身のリフレッシュと負傷・PTSD治療。', cost: '体力・メンタル大幅回復', staminaCost: 0, style: 'bg-emerald-950/40 hover:bg-emerald-900/50 border-emerald-700/60 text-emerald-400' }
                 ];
+            }
+        }
+
+        // Helper for applying heavy injury + automatic staff reassignment pivot
+        function applySevereInjuryFromExertion() {
+            if (state.conditions.includes('INJURED_LIGHT')) {
+                removeCondition('INJURED_LIGHT');
+            }
+            addCondition('INJURED_HEAVY');
+
+            if (!state.conditions.includes('REASSIGNED_STAFF')) {
+                addCondition('REASSIGNED_STAFF');
+                state.stats.intel = clamp(state.stats.intel + 8, 0, 100);
+                state.stats.lead = clamp(state.stats.lead + 8, 0, 100);
+                addLog(`📋 【配置転換】重傷による前線制限に伴い「教官・後方支援適性」が付与された（知識 +8, 統率 +8）。`, 'text-sky-300 font-bold');
+                addHighlight(`${getAge()}歳: 負傷による重傷を経て教官・後方支援適性を獲得`);
             }
         }
 
@@ -1123,6 +1139,10 @@
         function executeTurn(actionId) {
             if (state.awaitingChoice) return;
             playSfx('click');
+
+            const cmdDef = getAvailableCommands().find(c => c.id === actionId);
+            const spentStamina = cmdDef ? (cmdDef.staminaCost || 0) : 0;
+            const prevStamina = state.stamina;
 
             const hasHeavyInjury = state.conditions.includes('INJURED_HEAVY');
             const hasLightInjury = state.conditions.includes('INJURED_LIGHT');
@@ -1290,6 +1310,7 @@
                     if (hasHeavyInjury) {
                         removeCondition('INJURED_HEAVY');
                         addCondition('INJURED_LIGHT');
+                        state.heavyExertionCount = 0;
                         healMsg = ' 集中的なリハビリにより重傷が軽傷まで回復した！';
                     } else if (hasLightInjury) {
                         removeCondition('INJURED_LIGHT');
@@ -1396,6 +1417,60 @@
                 }
             }
 
+            // Exertion Penalty (NORMAL & HARD only): Executing a stamina-consuming command when stamina was 0 or below required cost
+            // Growth from the command remains intact; penalty is strictly Evaluation drop + Injury
+            const hasExertionPenalty = DIFFICULTY_MODS[state.difficulty].exertionPenalty;
+            const pushedPastLimit = hasExertionPenalty && spentStamina > 0 && (prevStamina === 0 || prevStamina < spentStamina);
+            if (pushedPastLimit) {
+                playSfx('alert');
+                const evalPenalty = prevStamina === 0 ? 5 : 4;
+                state.stats.eval = clamp(state.stats.eval - evalPenalty, 0, 100);
+                tag = 'OVEREXERTION';
+
+                // Guaranteed injury when starting at 0 stamina; high chance (65%) when pushing below required stamina
+                const injuryRoll = prevStamina === 0 || Math.random() < 0.65;
+                let injuryNote = '';
+
+                if (injuryRoll) {
+                    if (!state.conditions.includes('INJURED_LIGHT') && !state.conditions.includes('INJURED_HEAVY')) {
+                        addCondition('INJURED_LIGHT');
+                        injuryNote = 'さらに無理が祟って【軽傷】を負ってしまった！';
+                        addLog(`🩹 【無理押し負傷】体力不足のまま行動を強行し、軽傷を負った（上官評価 -${evalPenalty}）。`, 'text-rose-400 font-bold');
+                    } else if (state.conditions.includes('INJURED_LIGHT') && !state.conditions.includes('INJURED_HEAVY')) {
+                        applySevereInjuryFromExertion();
+                        injuryNote = '軽傷を押して無理をした結果、【重傷】へと悪化してしまった！';
+                        addLog(`🚨 【負傷悪化】軽傷のまま限界を超えた行動を強行し、重傷へ悪化した（上官評価 -${evalPenalty}）。`, 'text-red-400 font-bold');
+                    } else {
+                        state.heavyExertionCount = (state.heavyExertionCount || 0) + 1;
+                        const isHardFatalMode = DIFFICULTY_MODS[state.difficulty].canDie;
+                        // In HARD mode, pushing past stamina limit while heavily injured is lethal (guaranteed if stamina was 0 or 2nd+ time, 60% on 1st time)
+                        if (isHardFatalMode && (prevStamina === 0 || state.heavyExertionCount >= 2 || Math.random() < 0.60)) {
+                            state.isDead = true;
+                            const deathReason = state.phase === 'DEPLOYMENT' ? 'KIA' : 'EXERTION_DEATH';
+                            addLog(`💀 【致命的容態悪化】重傷の体で限界を超えた任務を強行した結果、帰らぬ人となった…。`, 'text-red-500 font-black');
+                            triggerEnding(deathReason);
+                            return;
+                        }
+                        injuryNote = isHardFatalMode
+                            ? '重傷の体に無理が祟り危篤寸前だ！（※HARD警告：次に重傷で無理押しすると死亡します）'
+                            : '重傷の体にさらに負担をかけてしまった！';
+                        addLog(`🚨 【重傷無理押し警告】重傷・体力限界での強行により上官評価が低下した（上官評価 -${evalPenalty}）。`, 'text-red-400 font-bold');
+                    }
+                } else {
+                    addLog(`⚠ 【無理押し警告】体力不足のまま強行し、体調管理不足として上官評価が低下した（上官評価 -${evalPenalty}）。`, 'text-amber-400 font-bold');
+                }
+
+                msg += ` 【無理押しペナルティ】体力限界で強行したため評価が低下（評価 -${evalPenalty}）。${injuryNote}`;
+            } else if (state.stamina <= 0 || state.mental <= 0) {
+                // Standard exhaustion check when stamina hits 0 at the end of a turn or mental hits 0
+                if (state.mental <= 0) {
+                    state.mental = 25;
+                    state.stats.eval = clamp(state.stats.eval - 4, 0, 100);
+                    msg += ' 【精神限界警告】メンタルが限界に達し、評価が下がってしまった（評価 -4）。';
+                    playSfx('alert');
+                }
+            }
+
             // Passive Housing Regeneration & Monthly Finance Settlement
             const house = HOUSING_TIERS[state.housingTier];
             if (state.phase === 'GARRISON') {
@@ -1404,14 +1479,6 @@
             }
             const finance = getMonthlyFinanceBreakdown();
             state.savings += finance.net;
-
-            if (state.stamina <= 0 || state.mental <= 0) {
-                state.stamina = Math.max(state.stamina, 25);
-                state.mental = Math.max(state.mental, 25);
-                state.stats.eval = clamp(state.stats.eval - 5, 0, 100);
-                msg += ' 【過労警告】無理が祟って倒れ、評価が下がってしまった（評価 -5）。';
-                playSfx('alert');
-            }
 
             // Advance 1 Month
             state.turn++;
@@ -1422,7 +1489,7 @@
             addLog(`[${getAge()}歳 ${getMonth()}月] ${msg} (収支 ${paySign})`);
             setDialogue(speaker, avatarType, `「${msg}」`, tag);
 
-            // Check HARD Mode "Up or Out" (with 12-month warning & Special Waiver rescue)
+            // Check HARD Mode "Up or Out"
             if (DIFFICULTY_MODS[state.difficulty].upOrOut) {
                 const curRank = getCurrentRank();
                 const effectiveLimit = curRank.maxMonthsHard + state.bonusHardMonths;
@@ -1433,7 +1500,6 @@
                         addLog(`⚠ 【昇進期限警告】現在の階級（${curRank.code}）の在任上限まで残り12ヶ月です！`, 'text-amber-400 font-bold');
                     }
                     if (state.monthsInGrade > effectiveLimit) {
-                        // Special Waiver Rescue: If Evaluation >= 60 or Merit >= 40, grant a +24 month retention waiver once per rank!
                         if (!state.waiverUsedForRank && (state.stats.eval >= 60 || state.stats.merit >= 40)) {
                             state.waiverUsedForRank = true;
                             state.bonusHardMonths += 24;
@@ -1917,16 +1983,19 @@
             else if (score >= 72) grade = 'B';
             else if (score >= 50) grade = 'C';
 
-            if (reason === 'KIA') {
+            if (reason === 'KIA' || reason === 'EXERTION_DEATH') {
                 playSfx('alert');
-                badgeEl.textContent = 'KILLED IN ACTION // 戦死';
+                const isCombat = reason === 'KIA';
+                badgeEl.textContent = isCombat ? 'KILLED IN ACTION // 戦死' : 'LINE OF DUTY DEATH // 職務殉職（重傷悪化）';
                 badgeEl.className = 'inline-block px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono-tech mb-2';
-                titleEl.textContent = '戦場に散った英雄 (HONOR FALLEN)';
-                subEl.textContent = `${getAge()}歳、戦地派遣任務中に仲間を守り抜いて壮絶な戦死を遂げた。`;
-                careerTitleEl.textContent = '「戦場に刻まれた不滅の魂」';
-                gradeEl.textContent = 'HERO';
+                titleEl.textContent = isCombat ? '戦場に散った英雄 (HONOR FALLEN)' : '職務に倒れた不屈の軍人 (FALLEN IN DUTY)';
+                subEl.textContent = isCombat
+                    ? `${getAge()}歳、戦地派遣任務中に限界を超えて戦い抜き壮絶な戦死を遂げた。`
+                    : `${getAge()}歳、重傷の身を押して任務を強行し続けた結果、容態が急変し殉職した。`;
+                careerTitleEl.textContent = isCombat ? '「戦場に刻まれた不滅の魂」' : '「限界を超えて任務に殉じた兵士」';
+                gradeEl.textContent = isCombat ? 'HERO' : 'FALLEN';
                 gradeEl.className = 'text-3xl font-black text-red-400 font-mono-tech';
-                epiEl.textContent = `${state.name}の名は所属部隊の慰霊碑に深く刻まれ、その勇敢な献身は後輩兵士たちの永遠の誇りとなった。`;
+                epiEl.textContent = `${state.name}の名は所属部隊の慰霊碑に深く刻まれ、その自己犠牲と献身は後輩兵士たちの記憶に永遠に残ることとなった。`;
             } else if (reason === 'UP_OR_OUT') {
                 playSfx('alert');
                 badgeEl.textContent = 'UP OR OUT // 昇進停滞による強制退役';
@@ -2085,7 +2154,7 @@
             document.getElementById('statEval').textContent = s.eval;
             document.getElementById('barEval').style.width = `${s.eval}%`;
 
-            // Promotion Board UI (Relaxed HARD Mode countdown)
+            // Promotion Board UI
             let tigText = `在任: ${state.monthsInGrade}ヶ月`;
             const warnEl = document.getElementById('upOrOutWarning');
             const effectiveLimit = rank.maxMonthsHard + state.bonusHardMonths;
@@ -2158,19 +2227,29 @@
 
             const cmds = getAvailableCommands();
             const gridEl = document.getElementById('dynamicCommandGrid');
+            const hasExertionPenalty = DIFFICULTY_MODS[state.difficulty].exertionPenalty;
             gridEl.className = `grid grid-cols-2 sm:grid-cols-${cmds.length} gap-2.5`;
-            gridEl.innerHTML = cmds.map(c => `
+            const isHardHeavy = DIFFICULTY_MODS[state.difficulty].canDie && state.conditions.includes('INJURED_HEAVY');
+            gridEl.innerHTML = cmds.map(c => {
+                const isStrainRisk = hasExertionPenalty && (c.staminaCost || 0) > 0 && (state.stamina === 0 || state.stamina < c.staminaCost);
+                const isLethalRisk = isStrainRisk && isHardHeavy;
+                return `
                 <button onclick="executeTurn('${c.id}')" ${state.awaitingChoice ? 'disabled' : ''}
-                    class="cmd-btn p-3 rounded-xl border text-left flex flex-col justify-between ${c.style} ${state.awaitingChoice ? 'opacity-50 cursor-not-allowed' : ''}">
+                    class="cmd-btn p-3 rounded-xl border text-left flex flex-col justify-between ${c.style} ${isLethalRisk ? 'ring-2 ring-red-500 animate-pulse' : (isStrainRisk ? 'ring-1 ring-rose-500/70' : '')} ${state.awaitingChoice ? 'opacity-50 cursor-not-allowed' : ''}">
                     <div>
-                        <div class="text-xs sm:text-sm font-extrabold mb-1">${c.title}</div>
+                        <div class="flex items-start justify-between gap-1 mb-1">
+                            <div class="text-xs sm:text-sm font-extrabold">${c.title}</div>
+                            ${isLethalRisk
+                                ? '<span class="px-1.5 py-0.5 rounded bg-red-600/40 border border-red-400 text-red-200 text-[9px] font-black shrink-0">☠ 致死リスク</span>'
+                                : (isStrainRisk ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/50 text-rose-300 text-[9px] font-bold shrink-0">⚠ 無理押し</span>' : '')}
+                        </div>
                         <p class="text-[11px] text-slate-300/90 leading-snug">${c.desc}</p>
                     </div>
-                    <div class="mt-2 pt-1.5 border-t border-slate-700/60 text-[10px] font-mono-tech text-slate-300">
-                        ${c.cost}
+                    <div class="mt-2 pt-1.5 border-t border-slate-700/60 text-[10px] font-mono-tech ${isLethalRisk ? 'text-red-300 font-black' : (isStrainRisk ? 'text-rose-300 font-bold' : 'text-slate-300')}">
+                        ${isLethalRisk ? '☠ 重傷＆体力不足：強行で死亡・戦死の危険！' : (isStrainRisk ? '⚠ 体力不足：実行で評価低下＆負傷リスク' : c.cost)}
                     </div>
                 </button>
-            `).join('');
+            `}).join('');
         }
 
         function renderSubordinatesTab() {
