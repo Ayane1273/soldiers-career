@@ -52,6 +52,13 @@
         .cmd-btn:active:not(:disabled) {
             transform: translateY(0px);
         }
+        @keyframes portrait-enter {
+            0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .portrait-anim {
+            animation: portrait-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+        }
         .dd214-card {
             background: linear-gradient(145deg, #111827 0%, #0b111e 100%);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
@@ -69,7 +76,7 @@
             <div>
                 <h1 class="text-sm sm:text-base font-black tracking-wider text-slate-100 flex items-center gap-2">
                     SOLDIER'S CAREER
-                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.3 // DEPLOYMENT MENTAL STRESS & SQUAD</span>
+                    <span class="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-700/60 text-emerald-400 font-mono-tech">VER 3.3 // PORTRAITS & SQUAD</span>
                 </h1>
                 <p class="text-[10px] text-slate-400 font-mono-tech tracking-widest hidden sm:block">FROM PRIVATE TO COMMAND // MONTHLY LIFE & CAREER SIM</p>
             </div>
@@ -305,8 +312,8 @@
                         </div>
                     </div>
 
-                    <div class="relative z-10 mt-auto pt-4">
-                        <div class="bg-slate-950/92 backdrop-blur-md border border-slate-600/80 rounded-xl p-3.5 sm:p-4 shadow-2xl flex gap-3.5 items-start">
+                    <div class="relative z-10 mt-auto pt-2 flex items-end gap-3">
+                        <div class="flex-1 min-w-0 bg-slate-950/92 backdrop-blur-md border border-slate-600/80 rounded-xl p-3.5 sm:p-4 shadow-2xl flex gap-3.5 items-start">
                             <div id="speakerAvatar" class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-800 border border-slate-600 shrink-0 flex items-center justify-center overflow-hidden shadow-md">
                             </div>
                             <div class="flex-1 min-w-0">
@@ -320,6 +327,7 @@
                                 <div id="eventChoicesContainer" class="hidden mt-3 flex flex-col gap-2"></div>
                             </div>
                         </div>
+                        <div id="standingPortraitBox" class="hidden sm:flex flex-col items-center justify-end w-28 md:w-32 h-36 md:h-40 rounded-xl bg-slate-950/85 border border-slate-600/80 overflow-hidden shrink-0 shadow-2xl backdrop-blur-sm"></div>
                     </div>
                 </div>
 
@@ -885,7 +893,8 @@
                 '指導教官 (Drill Sergeant)',
                 'INSTRUCTOR',
                 `「ようこそ合衆国陸軍へ、${state.name}二等兵！1ヶ月ごとの訓練と勤務を積み重ね、まずは一等兵（E-2）への昇進を目指せ！給料を貯めて生活環境を整えることも忘れるな！」`,
-                'ENLISTMENT'
+                'ENLISTMENT',
+                'SALUTE'
             );
 
             renderAll();
@@ -1915,7 +1924,8 @@
                 '昇進審査委員会 (Promotion Board)',
                 'OFFICER',
                 `「おめでとう、${newRank.name}！昇進が承認され、給与等級も引き上げられた。新しい階級章に相応しい責任とリーダーシップを発揮してくれ！」`,
-                'PROMOTION APPROVED'
+                'PROMOTION APPROVED',
+                'SALUTE'
             );
 
             renderAll();
@@ -1954,7 +1964,8 @@
                 'OCS 士官候補生学校 校長',
                 'OFFICER',
                 `「現場を知る叩き上げ将校の誕生だ、${newRank.name}！これからは指揮官として部下を率い、作戦立案と部隊統率を担うことになる！」`,
-                'COMMISSIONED OFFICER'
+                'COMMISSIONED OFFICER',
+                'SALUTE'
             );
 
             renderAll();
@@ -2428,11 +2439,271 @@
             logEl.prepend(entry);
         }
 
-        function setDialogue(speaker, avatarType, text, tag) {
+        const PORTRAIT_META = {
+            INSTRUCTOR: {
+                label: '教官',
+                ring: 'border-amber-500/60',
+                bg: 'from-amber-950/80 via-slate-900 to-slate-950',
+                accent: '#f59e0b',
+                hat: '#b45309',
+                suit: '#3f4e3a',
+                roleTitle: 'DRILL SGT'
+            },
+            MEDIC: {
+                label: '軍医',
+                ring: 'border-emerald-500/60',
+                bg: 'from-emerald-950/80 via-slate-900 to-slate-950',
+                accent: '#10b981',
+                hat: '#047857',
+                suit: '#2f4538',
+                roleTitle: 'MEDIC'
+            },
+            SOLDIER: {
+                label: '隊員',
+                ring: 'border-sky-500/60',
+                bg: 'from-sky-950/80 via-slate-900 to-slate-950',
+                accent: '#38bdf8',
+                hat: '#3f5236',
+                suit: '#4b5c3e',
+                roleTitle: 'SQUAD'
+            },
+            OFFICER: {
+                label: '将校',
+                ring: 'border-indigo-400/60',
+                bg: 'from-indigo-950/85 via-slate-900 to-slate-950',
+                accent: '#fbbf24',
+                hat: '#1e293b',
+                suit: '#283629',
+                roleTitle: 'COMMAND'
+            }
+        };
+
+        function detectExpression(avatarType, text, tag) {
+            const t = `${tag || ''} ${text || ''}`;
+            const hasInjury = typeof state !== 'undefined' && state.conditions &&
+                (state.conditions.includes('INJURED_HEAVY') || state.conditions.includes('INJURED_LIGHT'));
+
+            if (
+                /MEDICAL STOP|OVEREXERTION|CAREER PIVOT|重傷|軽傷|負傷|危篤|危ない|禁止だ|無理押し/.test(t) ||
+                (avatarType === 'MEDIC' && hasInjury && !/完治|寛解|回復した/.test(t))
+            ) {
+                return 'INJURED';
+            }
+            if (
+                /SPECIAL WAIVER|DEPLOYMENT ORDER|AMBUSH|HIGH RISK|緊急命令|伏兵|警告|許さん|叩き込め|厳しい|不満|下がって|不備/.test(t)
+            ) {
+                return 'ANGRY';
+            }
+            if (
+                /INSPECTION|RANGER SCHOOL|CIVIL AFFAIRS|NO SQUAD|GARRISON ONLY|脱落|辛うじて|抜け|隙|見送る|空き|分け与える/.test(t)
+            ) {
+                return 'NERVOUS';
+            }
+            if (
+                /PROMOTION APPROVED|COMMISSIONED|WELCOME HOME|LIFESTYLE UP|おめでとう|絶賛|栄誉|感謝|完治|寛解|向上した|成功|誕生だ|おかえり|リフレッシュ/.test(t)
+            ) {
+                return 'HAPPY';
+            }
+            if (avatarType === 'MEDIC') return 'HAPPY';
+            return 'NORMAL';
+        }
+
+        function getStandingPortraitSVG(avatarType, expression = 'NORMAL') {
+            const m = PORTRAIT_META[avatarType] || PORTRAIT_META.INSTRUCTOR;
+            const isOfficer = avatarType === 'OFFICER';
+            const isMedic = avatarType === 'MEDIC';
+            const isInstructor = avatarType === 'INSTRUCTOR';
+
+            const bgTopColor = expression === 'ANGRY' ? '#ef4444' : (expression === 'INJURED' ? '#f43f5e' : (expression === 'HAPPY' ? '#34d399' : (expression === 'NERVOUS' ? '#38bdf8' : m.accent)));
+
+            let faceSVG = '';
+            if (expression === 'ANGRY') {
+                faceSVG = `
+                    <!-- Angry Vein Mark -->
+                    <path d="M77 40 L80 43 L83 40 M77 46 L80 43 L83 46" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Sharp Angled Brows -->
+                    <line x1="45" y1="47" x2="59" y2="53" stroke="#090e17" stroke-width="3.2" stroke-linecap="round"/>
+                    <line x1="83" y1="47" x2="69" y2="53" stroke="#090e17" stroke-width="3.2" stroke-linecap="round"/>
+                    <!-- Fierce Eyes -->
+                    <circle cx="53" cy="56" r="4" fill="#0f172a"/>
+                    <circle cx="75" cy="56" r="4" fill="#0f172a"/>
+                    <circle cx="52" cy="55" r="1.3" fill="#ffffff"/>
+                    <circle cx="74" cy="55" r="1.3" fill="#ffffff"/>
+                    <!-- Shouting Mouth -->
+                    <path d="M54 68 Q64 60 74 68 Q64 73 54 68 Z" fill="#b91c1c" stroke="#090e17" stroke-width="2"/>
+                `;
+            } else if (expression === 'HAPPY') {
+                faceSVG = `
+                    <!-- Happy Arched Brows -->
+                    <path d="M47 48 Q53 44 59 48" fill="none" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <path d="M69 48 Q75 44 81 48" fill="none" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <!-- Smiling Closed Eyes (^ ^) -->
+                    <path d="M48 56 Q53 50 58 56" fill="none" stroke="#090e17" stroke-width="2.8" stroke-linecap="round"/>
+                    <path d="M70 56 Q75 50 80 56" fill="none" stroke="#090e17" stroke-width="2.8" stroke-linecap="round"/>
+                    <!-- Rosy Cheeks -->
+                    <ellipse cx="46" cy="61" rx="4" ry="2.2" fill="#fb7185" opacity="0.55"/>
+                    <ellipse cx="82" cy="61" rx="4" ry="2.2" fill="#fb7185" opacity="0.55"/>
+                    <!-- Big Grin -->
+                    <path d="M54 64 Q64 75 74 64 Z" fill="#f87171" stroke="#090e17" stroke-width="2.2"/>
+                    <path d="M56 65 H72" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                `;
+            } else if (expression === 'INJURED') {
+                faceSVG = `
+                    <!-- Forehead Bandage & Cross Plaster -->
+                    <path d="M41 43 Q64 47 87 43 L86 48 Q64 52 42 48 Z" fill="#f8fafc" stroke="#64748b" stroke-width="1.2"/>
+                    <rect x="74" y="59" width="9" height="4" rx="1" transform="rotate(-25 78 61)" fill="#fde68a" stroke="#92400e" stroke-width="1"/>
+                    <!-- Sweat Drop -->
+                    <path d="M44 53 C42 56, 42 59, 44 59 C46 59, 46 56, 44 53 Z" fill="#38bdf8"/>
+                    <!-- Troubled / Wincing Brows & Eyes (> <) -->
+                    <line x1="47" y1="52" x2="58" y2="49" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <line x1="81" y1="52" x2="70" y2="49" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <path d="M49 54 L56 57 L49 60" fill="none" stroke="#090e17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M79 54 L72 57 L79 60" fill="none" stroke="#090e17" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Wavy Grimace Mouth -->
+                    <path d="M55 68 Q59.5 64 64 68 Q68.5 72 73 68" fill="none" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                `;
+            } else if (expression === 'NERVOUS') {
+                faceSVG = `
+                    <!-- Multiple Sweat Drops -->
+                    <path d="M43 49 C41 53, 41 56, 43 56 C45 56, 45 53, 43 49 Z" fill="#38bdf8"/>
+                    <path d="M84 52 C82.5 55, 82.5 58, 84 58 C85.5 58, 85.5 55, 84 52 Z" fill="#38bdf8"/>
+                    <!-- Worried / Troubled Slanted Brows -->
+                    <line x1="47" y1="51" x2="58" y2="48" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <line x1="81" y1="51" x2="70" y2="48" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    <!-- Shaken / Small Pupil Eyes -->
+                    <circle cx="53" cy="56" r="4.2" fill="#ffffff" stroke="#090e17" stroke-width="1.6"/>
+                    <circle cx="75" cy="56" r="4.2" fill="#ffffff" stroke="#090e17" stroke-width="1.6"/>
+                    <circle cx="53.5" cy="56" r="2.1" fill="#0f172a"/>
+                    <circle cx="75.5" cy="56" r="2.1" fill="#0f172a"/>
+                    <!-- Wobbly Nervous Mouth -->
+                    <path d="M55 67 Q59.5 64 64 67 Q68.5 70 73 67" fill="none" stroke="#090e17" stroke-width="2.3" stroke-linecap="round"/>
+                `;
+            } else {
+                faceSVG = `
+                    <circle cx="53" cy="56" r="4.2" fill="#0f172a"/>
+                    <circle cx="75" cy="56" r="4.2" fill="#0f172a"/>
+                    <circle cx="51.8" cy="54.5" r="1.5" fill="#ffffff"/>
+                    <circle cx="73.8" cy="54.5" r="1.5" fill="#ffffff"/>
+                    ${isInstructor ? `
+                        <line x1="46" y1="49" x2="59" y2="52" stroke="#090e17" stroke-width="3" stroke-linecap="round"/>
+                        <line x1="82" y1="49" x2="69" y2="52" stroke="#090e17" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M55 67 Q64 62 73 67" fill="none" stroke="#090e17" stroke-width="2.5" stroke-linecap="round"/>
+                    ` : isMedic ? `
+                        <path d="M48 50 Q53 47 58 50" fill="none" stroke="#090e17" stroke-width="2.2" stroke-linecap="round"/>
+                        <path d="M70 50 Q75 47 80 50" fill="none" stroke="#090e17" stroke-width="2.2" stroke-linecap="round"/>
+                        <path d="M57 65 Q64 71 71 65" fill="none" stroke="#090e17" stroke-width="2.4" stroke-linecap="round"/>
+                    ` : `
+                        <line x1="47" y1="49" x2="58" y2="51" stroke="#090e17" stroke-width="2.5" stroke-linecap="round"/>
+                        <line x1="81" y1="49" x2="70" y2="51" stroke="#090e17" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M56 65 Q64 72 72 65 Z" fill="#f87171" stroke="#090e17" stroke-width="2"/>
+                    `}
+                `;
+            }
+
+            return `
+                <svg viewBox="0 0 128 160" class="w-full h-full portrait-anim" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="bg_${avatarType}_${expression}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="${bgTopColor}" stop-opacity="0.32"/>
+                            <stop offset="100%" stop-color="#090e17" stop-opacity="0.98"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="128" height="160" fill="url(#bg_${avatarType}_${expression})"/>
+                    <ellipse cx="64" cy="148" rx="34" ry="6" fill="#000000" opacity="0.55"/>
+
+                    <!-- Legs & Boots (2-head super-deformed proportions) -->
+                    <rect x="46" y="106" width="13" height="24" rx="4" fill="${m.suit}" stroke="#090e17" stroke-width="2.5"/>
+                    <rect x="69" y="106" width="13" height="24" rx="4" fill="${m.suit}" stroke="#090e17" stroke-width="2.5"/>
+                    <path d="M43 128 H60 V143 H41 Z" fill="#1e293b" stroke="#090e17" stroke-width="2.5"/>
+                    <path d="M68 128 H85 V143 H66 Z" fill="#1e293b" stroke="#090e17" stroke-width="2.5"/>
+
+                    <!-- Torso / Uniform -->
+                    <path d="M34 82 Q64 76 94 82 L90 112 H38 Z" fill="${m.suit}" stroke="#090e17" stroke-width="2.5"/>
+                    <rect x="38" y="103" width="52" height="6" fill="#451a03"/>
+                    <rect x="59" y="102" width="10" height="8" rx="1.5" fill="${m.accent}"/>
+
+                    ${isOfficer ? `
+                        <line x1="40" y1="83" x2="86" y2="105" stroke="#78350f" stroke-width="4"/>
+                        <polygon points="48,91 50,95 54,95 51,97 52,101 48,98 44,101 45,97 42,95 46,95" fill="#fbbf24"/>
+                        <rect x="70" y="90" width="12" height="3" fill="#ef4444"/>
+                        <rect x="70" y="94" width="12" height="3" fill="#38bdf8"/>
+                    ` : ''}
+                    ${isMedic ? `
+                        <rect x="57" y="88" width="14" height="12" rx="2" fill="#f8fafc" stroke="#090e17" stroke-width="1.5"/>
+                        <path d="M64 90 V98 M60 94 H68" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+                    ` : ''}
+
+                    <!-- Arms (Sling when INJURED, Salute pose when SALUTE) -->
+                    <path d="M35 84 L22 104 L30 110 L41 94" fill="${m.suit}" stroke="#090e17" stroke-width="2.5" stroke-linejoin="round"/>
+                    <circle cx="25" cy="108" r="5.5" fill="#fed7aa" stroke="#090e17" stroke-width="2"/>
+                    ${expression === 'INJURED' ? `
+                        <path d="M52 80 L94 98 L87 109 L46 91 Z" fill="#f8fafc" stroke="#475569" stroke-width="1.8"/>
+                        <circle cx="88" cy="102" r="5" fill="#fed7aa" stroke="#090e17" stroke-width="2"/>
+                    ` : expression === 'SALUTE' ? `
+                        <path d="M92 84 L112 72 L95 45 L87 49 L99 69 L87 88 Z" fill="${m.suit}" stroke="#090e17" stroke-width="2.5" stroke-linejoin="round"/>
+                        <ellipse cx="90" cy="45" rx="6" ry="3.5" transform="rotate(-25 90 45)" fill="#fed7aa" stroke="#090e17" stroke-width="2"/>
+                    ` : `
+                        <path d="M93 84 L106 102 L98 108 L87 94" fill="${m.suit}" stroke="#090e17" stroke-width="2.5" stroke-linejoin="round"/>
+                        <circle cx="103" cy="106" r="5.5" fill="#fed7aa" stroke="#090e17" stroke-width="2"/>
+                    `}
+                    ${isInstructor && expression !== 'INJURED' && expression !== 'SALUTE' ? `
+                        <rect x="100" y="98" width="14" height="19" rx="2" fill="#f8fafc" stroke="#090e17" stroke-width="2"/>
+                        <line x1="103" y1="103" x2="111" y2="103" stroke="#64748b" stroke-width="1.5"/>
+                        <line x1="103" y1="108" x2="111" y2="108" stroke="#64748b" stroke-width="1.5"/>
+                    ` : ''}
+
+                    <!-- Large Super-Deformed Head -->
+                    <circle cx="64" cy="54" r="25" fill="#fed7aa" stroke="#090e17" stroke-width="2.8"/>
+
+                    <!-- Eyes & Expressions -->
+                    ${faceSVG}
+
+                    <!-- Headgear by Role -->
+                    ${isInstructor ? `
+                        <ellipse cx="64" cy="36" rx="38" ry="8" fill="${m.hat}" stroke="#090e17" stroke-width="2.5"/>
+                        <path d="M42 35 Q45 17 64 16 Q83 17 86 35 Z" fill="${m.hat}" stroke="#090e17" stroke-width="2.5"/>
+                        <circle cx="64" cy="26" r="4" fill="#fbbf24"/>
+                    ` : isOfficer ? `
+                        <path d="M36 33 Q64 14 92 33 L88 20 Q64 10 40 20 Z" fill="${m.hat}" stroke="#090e17" stroke-width="2.5"/>
+                        <path d="M40 33 H88 L93 40 H35 Z" fill="#090e17"/>
+                        <circle cx="64" cy="24" r="4.5" fill="#fbbf24"/>
+                    ` : isMedic ? `
+                        <path d="M39 36 Q64 17 89 36 Z" fill="${m.hat}" stroke="#090e17" stroke-width="2.5"/>
+                        <path d="M39 36 H74 L70 42 H39 Z" fill="#065f46" stroke="#090e17" stroke-width="2"/>
+                        <path d="M64 22 V30 M60 26 H68" stroke="#34d399" stroke-width="2.2" stroke-linecap="round"/>
+                    ` : `
+                        <path d="M38 37 Q39 16 64 15 Q89 16 90 37 Z" fill="${m.hat}" stroke="#090e17" stroke-width="2.5"/>
+                        <rect x="43" y="27" width="42" height="9" rx="3" fill="#d97706" opacity="0.85" stroke="#090e17" stroke-width="2"/>
+                    `}
+                </svg>
+            `;
+        }
+
+        function setDialogue(speaker, avatarType, text, tag, forcedExpr = null) {
             document.getElementById('speakerName').textContent = speaker;
             document.getElementById('dialogueText').textContent = text;
             document.getElementById('eventTag').textContent = tag;
             document.getElementById('speakerAvatar').innerHTML = getAvatarSVG(avatarType);
+
+            const expr = forcedExpr || detectExpression(avatarType, text, tag);
+            const exprBadgeMap = {
+                NORMAL: '',
+                HAPPY: '<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-emerald-950/90 border border-emerald-500/50 text-[9px] font-bold text-emerald-300">😊 喜</span>',
+                ANGRY: '<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-red-950/90 border border-red-500/50 text-[9px] font-bold text-red-300">💢 怒</span>',
+                INJURED: '<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-rose-950/90 border border-rose-500/50 text-[9px] font-bold text-rose-300">🩹 傷</span>',
+                NERVOUS: '<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-sky-950/90 border border-sky-500/50 text-[9px] font-bold text-sky-300">💦 焦</span>',
+                SALUTE: '<span class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/50 text-[9px] font-bold text-amber-300">🫡 敬礼</span>'
+            };
+
+            const pBox = document.getElementById('standingPortraitBox');
+            const pInfo = PORTRAIT_META[avatarType] || PORTRAIT_META.INSTRUCTOR;
+            const ringClass = expr === 'ANGRY' ? 'border-red-500/70' : (expr === 'INJURED' ? 'border-rose-500/70' : (expr === 'HAPPY' ? 'border-emerald-400/70' : (expr === 'NERVOUS' ? 'border-sky-400/70' : (expr === 'SALUTE' ? 'border-amber-400/80' : pInfo.ring))));
+            pBox.className = `hidden sm:flex flex-col items-center justify-end w-28 md:w-32 h-36 md:h-40 rounded-xl bg-slate-950/90 border ${ringClass} overflow-hidden shrink-0 shadow-2xl relative`;
+            pBox.innerHTML = `
+                ${getStandingPortraitSVG(avatarType, expr)}
+                ${exprBadgeMap[expr] || ''}
+                <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-950/85 border border-slate-700 text-[9px] font-mono-tech text-amber-300">${pInfo.label}</span>
+            `;
         }
 
         function openHelpModal() {
